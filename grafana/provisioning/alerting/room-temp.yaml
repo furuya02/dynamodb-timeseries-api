@@ -1,0 +1,79 @@
+# サンプルのアラートルール（Grafana の provisioning で読み込む）
+# アラートはバックエンドで評価されるため、ダッシュボードの変数（${key:csv}）と $__interval_ms は使えない。
+# key は値を直接書き、最新値（latest=1）で判定する。${__from} / ${__to} は Infinity のバックエンドが置き換える
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: room-temp
+    folder: dynamodb-timeseries-api
+    interval: 1m
+    rules:
+      - uid: tsapi-room-temp-high
+        title: 部屋の温度が高い（29℃ 超が 5 分続く）
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: tsapi
+            model:
+              refId: A
+              type: json
+              source: url
+              parser: backend
+              url: query
+              url_options:
+                method: GET
+                data: ""
+                params:
+                  - key: dataset
+                    value: room_temp
+                  - key: key
+                    value: room-01,room-02,room-03
+                  - key: from
+                    value: ${__from}
+                  - key: to
+                    value: ${__to}
+                  - key: latest
+                    value: "1"
+                  - key: fields
+                    value: temperature
+              root_selector: rows
+              columns:
+                - selector: time
+                  text: time
+                  type: timestamp_epoch
+                - selector: key
+                  text: key
+                  type: string
+                - selector: temperature
+                  text: temperature
+                  type: number
+              filters: []
+              format: timeseries
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 29
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "{{ $labels.key }} の温度が {{ $values.B }}℃ です"
+        labels:
+          source: dynamodb-timeseries-api

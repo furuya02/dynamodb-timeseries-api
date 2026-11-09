@@ -1,0 +1,754 @@
+{
+  "uid": "tsapi-room-temp",
+  "title": "部屋の温度と湿度（dynamodb-timeseries-api サンプル）",
+  "description": "pnpm seed で入れたサンプルデータを、dynamodb-timeseries-api 経由で表示します",
+  "tags": ["dynamodb-timeseries-api", "dynamodb"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "key",
+        "label": "部屋",
+        "type": "query",
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "tsapi"
+        },
+        "query": {
+          "queryType": "infinity",
+          "refId": "variable",
+          "infinityQuery": {
+            "refId": "variable",
+            "datasource": {
+              "type": "yesoreyeram-infinity-datasource",
+              "uid": "tsapi"
+            },
+            "type": "json",
+            "source": "url",
+            "parser": "backend",
+            "url": "keys",
+            "url_options": {
+              "method": "GET",
+              "data": "",
+              "params": [
+                {
+                  "key": "dataset",
+                  "value": "room_temp"
+                }
+              ]
+            },
+            "root_selector": "",
+            "columns": [
+              {
+                "selector": "key",
+                "text": "key",
+                "type": "string"
+              }
+            ],
+            "filters": [],
+            "format": "table"
+          }
+        },
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "sort": 1,
+        "definition": "GET keys?dataset=room_temp"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "温度（表示間隔ごとの平均）",
+      "type": "timeseries",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "tsapi"
+      },
+      "description": "interval=${__interval_ms} で API 側が集計します。表示期間を広げても点の数が増えすぎません",
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "tsapi"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "query",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "dataset",
+                "value": "room_temp"
+              },
+              {
+                "key": "key",
+                "value": "${key:csv}"
+              },
+              {
+                "key": "from",
+                "value": "${__from}"
+              },
+              {
+                "key": "to",
+                "value": "${__to}"
+              },
+              {
+                "key": "interval",
+                "value": "${__interval_ms}"
+              },
+              {
+                "key": "agg",
+                "value": "avg"
+              },
+              {
+                "key": "fields",
+                "value": "temperature"
+              }
+            ]
+          },
+          "root_selector": "rows",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "key",
+              "text": "key",
+              "type": "string"
+            },
+            {
+              "selector": "temperature",
+              "text": "temperature",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "format": "timeseries"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "displayName": "${__field.labels.key}"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "最新の温度",
+      "type": "gauge",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "tsapi"
+      },
+      "description": "latest=1 でキーごとに最新の 1 件だけを読みます（アラート向けの書き方）",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "tsapi"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "query",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "dataset",
+                "value": "room_temp"
+              },
+              {
+                "key": "key",
+                "value": "${key:csv}"
+              },
+              {
+                "key": "from",
+                "value": "${__from}"
+              },
+              {
+                "key": "to",
+                "value": "${__to}"
+              },
+              {
+                "key": "latest",
+                "value": "1"
+              },
+              {
+                "key": "fields",
+                "value": "temperature"
+              }
+            ]
+          },
+          "root_selector": "rows",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "key",
+              "text": "key",
+              "type": "string"
+            },
+            {
+              "selector": "temperature",
+              "text": "temperature",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "format": "timeseries"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "displayName": "${__field.labels.key}",
+          "decimals": 1,
+          "min": 15,
+          "max": 35,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 18
+              },
+              {
+                "color": "yellow",
+                "value": 26
+              },
+              {
+                "color": "red",
+                "value": 29
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdMarkers": true,
+        "showThresholdLabels": false,
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "湿度（表示間隔ごとの平均）",
+      "type": "timeseries",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "tsapi"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 0,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "tsapi"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "query",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "dataset",
+                "value": "room_temp"
+              },
+              {
+                "key": "key",
+                "value": "${key:csv}"
+              },
+              {
+                "key": "from",
+                "value": "${__from}"
+              },
+              {
+                "key": "to",
+                "value": "${__to}"
+              },
+              {
+                "key": "interval",
+                "value": "${__interval_ms}"
+              },
+              {
+                "key": "agg",
+                "value": "avg"
+              },
+              {
+                "key": "fields",
+                "value": "humidity"
+              }
+            ]
+          },
+          "root_selector": "rows",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "key",
+              "text": "key",
+              "type": "string"
+            },
+            {
+              "selector": "humidity",
+              "text": "humidity",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "format": "timeseries"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "humidity",
+          "displayName": "${__field.labels.key}"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "最新の湿度",
+      "type": "bargauge",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "tsapi"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "tsapi"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "query",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "dataset",
+                "value": "room_temp"
+              },
+              {
+                "key": "key",
+                "value": "${key:csv}"
+              },
+              {
+                "key": "from",
+                "value": "${__from}"
+              },
+              {
+                "key": "to",
+                "value": "${__to}"
+              },
+              {
+                "key": "latest",
+                "value": "1"
+              },
+              {
+                "key": "fields",
+                "value": "humidity"
+              }
+            ]
+          },
+          "root_selector": "rows",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "key",
+              "text": "key",
+              "type": "string"
+            },
+            {
+              "selector": "humidity",
+              "text": "humidity",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "format": "timeseries"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "humidity",
+          "displayName": "${__field.labels.key}",
+          "decimals": 1,
+          "min": 20,
+          "max": 80,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 40
+              },
+              {
+                "color": "blue",
+                "value": 65
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "minVizHeight": 16,
+        "maxVizHeight": 48
+      }
+    },
+    {
+      "id": 5,
+      "title": "日ごとの最高気温（JST）",
+      "type": "barchart",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "tsapi"
+      },
+      "description": "interval=1d、agg=max、tz=Asia/Tokyo で JST の 0 時から 1 日ずつ集計します。期間を 7 日以上にすると見やすくなります",
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 0,
+        "y": 18
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "tsapi"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "query",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "dataset",
+                "value": "room_temp"
+              },
+              {
+                "key": "key",
+                "value": "${key:csv}"
+              },
+              {
+                "key": "from",
+                "value": "${__from}"
+              },
+              {
+                "key": "to",
+                "value": "${__to}"
+              },
+              {
+                "key": "interval",
+                "value": "1d"
+              },
+              {
+                "key": "agg",
+                "value": "max"
+              },
+              {
+                "key": "tz",
+                "value": "Asia/Tokyo"
+              },
+              {
+                "key": "fields",
+                "value": "temperature"
+              }
+            ]
+          },
+          "root_selector": "rows",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "key",
+              "text": "key",
+              "type": "string"
+            },
+            {
+              "selector": "temperature",
+              "text": "max",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "format": "timeseries"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "displayName": "${__field.labels.key}",
+          "min": 15,
+          "decimals": 1,
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 100,
+        "showValue": "never",
+        "stacking": "none",
+        "groupWidth": 0.7,
+        "barWidth": 0.95,
+        "barRadius": 0,
+        "fullHighlight": false,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "API の応答（meta）",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "tsapi"
+      },
+      "description": "温度パネルと同じ問い合わせの meta。読んだ件数（items）と消費 RCU、上限による打ち切り（truncated）、キャッシュの hit / miss を確認できます",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 18
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "tsapi"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "query",
+          "url_options": {
+            "method": "GET",
+            "data": "",
+            "params": [
+              {
+                "key": "dataset",
+                "value": "room_temp"
+              },
+              {
+                "key": "key",
+                "value": "${key:csv}"
+              },
+              {
+                "key": "from",
+                "value": "${__from}"
+              },
+              {
+                "key": "to",
+                "value": "${__to}"
+              },
+              {
+                "key": "interval",
+                "value": "${__interval_ms}"
+              },
+              {
+                "key": "agg",
+                "value": "avg"
+              },
+              {
+                "key": "fields",
+                "value": "temperature"
+              }
+            ]
+          },
+          "root_selector": "meta",
+          "columns": [
+            {
+              "selector": "points",
+              "text": "点数",
+              "type": "number"
+            },
+            {
+              "selector": "items",
+              "text": "件数",
+              "type": "number"
+            },
+            {
+              "selector": "pages",
+              "text": "ページ",
+              "type": "number"
+            },
+            {
+              "selector": "consumedRcu",
+              "text": "RCU",
+              "type": "number"
+            },
+            {
+              "selector": "truncated",
+              "text": "打ち切り",
+              "type": "boolean"
+            },
+            {
+              "selector": "truncatedBy",
+              "text": "上限",
+              "type": "string"
+            },
+            {
+              "selector": "cache",
+              "text": "キャッシュ",
+              "type": "string"
+            }
+          ],
+          "filters": [],
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "minWidth": 50,
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    }
+  ],
+  "annotations": {
+    "list": []
+  }
+}
