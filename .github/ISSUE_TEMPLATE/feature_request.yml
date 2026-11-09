@@ -1,0 +1,19 @@
+name: Feature request / 機能の提案
+description: Suggest a new setting, parameter, or table design to support / 新しい設定・パラメータ・対応したいテーブル設計を提案する
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 困っていること
+      description: Your table design and what you want to show in Grafana / テーブル設計と、Grafana で表示したいもの
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal / 提案
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered / 検討した代替案

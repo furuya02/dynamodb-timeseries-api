@@ -1,0 +1,31 @@
+# Grafana から参照できるデータセットの定義
+# 1 つのデータセット = 「どのテーブルの、どのキーの、どの属性を返すか」
+# 書き方: docs/ja/02-datasets.md（English: docs/en/02-datasets.md）
+# 既存のテーブルから下書きを作る: pnpm init-dataset --table <テーブル名>
+
+datasets:
+  # サンプル: cdk deploy -c sample=true で作るテーブルと、pnpm seed で入れる疑似センサーのデータ
+  # パーティションキー = 部屋 ID、ソートキー = epoch ミリ秒
+  room_temp:
+    description: 部屋ごとの温度と湿度（サンプル）
+    table: dynamodb-timeseries-api-sample
+    partitionKey:
+      name: deviceId
+    sortKey:
+      name: ts
+      format: epoch_ms
+    keys:
+      pattern: "^room-[0-9]{2}$"
+      # Grafana のプルダウン用。パーティションキー = devices のアイテムの id を一覧にする
+      list: { partitionValue: devices, attribute: id }
+    fields:
+      - { name: temperature, type: number, unit: celsius }
+      - { name: humidity, type: number, unit: percent }
+    limits:
+      maxRange: 31d
+      maxItems: 50000
+    # コールドストア（直近 7 日より前を S3 + Athena から読む）。使うときはコメントを外し、-c cold=true でデプロイする
+    # 書き方: docs/ja/09-cold-storage.md
+    # cold:
+    #   hotRetention: 7d
+    #   maxRange: 400d

@@ -1,0 +1,7 @@
+# Linux の Docker で、コンテナからホストの pnpm local-api（host.docker.internal）に届くようにする
+#   docker compose -f grafana/docker-compose.yml -f grafana/docker-compose.linux.yml up -d
+# Docker Desktop / Rancher Desktop では使わない（host.docker.internal が VM 内のブリッジに上書きされ、届かなくなる）
+services:
+  grafana:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

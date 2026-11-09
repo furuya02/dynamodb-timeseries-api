@@ -1,0 +1,14 @@
+node_modules/
+cdk.out/
+*.js
+*.d.ts
+.env
+grafana/provisioning/generated/
+cdk/lambda/api/datasets.generated.json
+.DS_Store
+coverage/
+.env.*
+*.log
+*.tsbuildinfo
+.vscode/
+.idea/

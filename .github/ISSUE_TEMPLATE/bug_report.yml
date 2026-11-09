@@ -1,0 +1,45 @@
+name: Bug report / 不具合の報告
+description: Report something that does not work as documented / ドキュメントどおりに動かないことを報告する
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / 何が起きたか
+      description: Include the command or Grafana query and the response (remove secrets and account IDs) / 実行したコマンドや Grafana のクエリと応答（秘密情報やアカウント ID は除いてください）
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / 期待した動作
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: datasets.yaml (relevant part) / datasets.yaml（該当部分）
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / ログ
+      description: Output of pnpm check, or the CloudWatch Logs line (type = query) / pnpm check の出力、または CloudWatch Logs の 1 行（type = query）
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions / バージョン
+      description: Release or commit, Node.js, pnpm, Grafana, Infinity / リリースまたはコミット、Node.js、pnpm、Grafana、Infinity
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Grafana environment / Grafana の環境
+      options: [Self-hosted, Grafana Cloud, Amazon Managed Grafana, Other]
+  - type: dropdown
+    id: exposure
+    attributes:
+      label: Deploy options / デプロイオプション
+      options: [restPublic + iam, restPublic + apiKey, functionUrl, restPrivate, Other]

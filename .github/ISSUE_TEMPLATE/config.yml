@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability / 脆弱性の報告
+    url: https://github.com/furuya02/dynamodb-timeseries-api/security/advisories/new
+    about: Please report security issues privately / 脆弱性は公開の Issue ではなく、非公開で報告してください

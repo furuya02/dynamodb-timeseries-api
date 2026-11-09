@@ -1,0 +1,32 @@
+# ローカルで Grafana OSS + Infinity を起動する（pnpm grafana-up / pnpm grafana-down）
+# データソース設定は pnpm grafana-config（または --local）で生成してから起動する
+name: dynamodb-timeseries-api
+services:
+  grafana:
+    image: grafana/grafana:13.3.0
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      # 起動前に Infinity を入れる（バージョン固定）
+      GF_PLUGINS_PREINSTALL_SYNC: yesoreyeram-infinity-datasource@4.1.5
+      # ログインなしでダッシュボードを見られるようにする（127.0.0.1 からのみ）
+      # Grafana 13 の匿名アクセスは閲覧者（Viewer）だけ。編集するときは admin / admin でログインする
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      # データソース設定（$__env{...}）が読む認証情報。値はシェルの環境変数から渡す
+      TSAPI_AWS_ACCESS_KEY_ID: ${TSAPI_AWS_ACCESS_KEY_ID:-}
+      TSAPI_AWS_SECRET_ACCESS_KEY: ${TSAPI_AWS_SECRET_ACCESS_KEY:-}
+      TSAPI_API_KEY: ${TSAPI_API_KEY:-}
+    volumes:
+      - ./provisioning/generated/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./provisioning/alerting:/etc/grafana/provisioning/alerting:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+    # ホストで動く pnpm local-api には host.docker.internal で届く（Docker Desktop / Rancher Desktop）
+    # Linux の Docker では docker-compose.linux.yml も重ねて指定する（README 参照）
+  # AWS を使わずに試すときの DynamoDB Local（docker compose --profile local up）
+  dynamodb-local:
+    profiles: [local]
+    image: amazon/dynamodb-local:3.3.2
+    command: -jar DynamoDBLocal.jar -inMemory
+    ports:
+      - "127.0.0.1:8000:8000"

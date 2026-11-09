@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      aws-sdk:
+        patterns: ["@aws-sdk/*", "@smithy/*", "@aws-crypto/*"]
+      aws-cdk:
+        patterns: ["aws-cdk", "aws-cdk-lib", "constructs"]
+      dev-tools:
+        dependency-type: development
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker-compose
+    directory: /grafana
+    schedule:
+      interval: weekly
