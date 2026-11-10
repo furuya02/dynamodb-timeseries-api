@@ -24,7 +24,7 @@
     "coverage": "pnpm --dir cdk coverage"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.5",
+    "@biomejs/biome": "2.6.6",
     "esbuild": "0.28.2"
   },
   "engines": {

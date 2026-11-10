@@ -11,9 +11,9 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.164",
-    "@types/node": "^24.10.1",
+    "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "5.1.0",
-    "aws-cdk": "2.1147.0",
+    "aws-cdk": "2.1148.0",
     "hyparquet": "1.32.0",
     "tsx": "^4.23.0",
     "typescript": "~7.0.2",
