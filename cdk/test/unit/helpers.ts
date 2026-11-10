@@ -23,7 +23,7 @@ export function fakeClient(respond: (input: QueryCommand['input'], call: number)
   const calls: QueryCommand['input'][] = [];
   const client: QueryClient = {
     async send(command) {
-      if (!(command instanceof QueryCommand)) throw new Error('QueryCommand 以外が送られました');
+      if (!(command instanceof QueryCommand)) throw new Error('A command other than QueryCommand was sent');
       calls.push(command.input);
       return { $metadata: {}, ...respond(command.input, calls.length - 1) };
     },

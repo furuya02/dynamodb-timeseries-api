@@ -37,7 +37,7 @@ export function readOptions(get: (key: string) => unknown): DeployOptions {
   };
   const oneOf = <T extends string>(key: string, list: readonly T[], def: T): T => {
     const v = str(key) ?? def;
-    if (!(list as readonly string[]).includes(v)) errors.push(`-c ${key}=${v}: ${list.join(' / ')} のいずれかを指定してください`);
+    if (!(list as readonly string[]).includes(v)) errors.push(`-c ${key}=${v}: must be one of ${list.join(' / ')}`);
     return v as T;
   };
   const int = (key: string, def: number, ok: (n: number) => boolean, hint: string) => {
@@ -53,34 +53,33 @@ export function readOptions(get: (key: string) => unknown): DeployOptions {
   const grafanaUser = str('grafanaUser') === 'true';
   const sample = str('sample') === 'true';
   const grafanaRoleTrust = str('grafanaRoleTrust');
-  const logRetentionDays = int('logRetentionDays', 7, (n) => RETENTION_DAYS.includes(n), `${RETENTION_DAYS.join(' / ')} のいずれかを指定してください`);
-  const throttleRate = int('throttleRate', 10, (n) => n > 0, '1 以上の整数を指定してください');
-  const throttleBurst = int('throttleBurst', 20, (n) => n > 0, '1 以上の整数を指定してください');
+  const logRetentionDays = int('logRetentionDays', 7, (n) => RETENTION_DAYS.includes(n), `must be one of ${RETENTION_DAYS.join(' / ')}`);
+  const throttleRate = int('throttleRate', 10, (n) => n > 0, 'must be an integer of 1 or more');
+  const throttleBurst = int('throttleBurst', 20, (n) => n > 0, 'must be an integer of 1 or more');
   const cold = str('cold') === 'true';
   const coldIngest = oneOf('coldIngest', coldIngests, 'scheduled');
-  const coldScanLimitGb = int('coldScanLimitGb', 1, (n) => n >= 1 && n <= 1024, '1〜1024 の整数（GB）を指定してください');
+  const coldScanLimitGb = int('coldScanLimitGb', 1, (n) => n >= 1 && n <= 1024, 'must be an integer from 1 to 1024 (GB)');
   const coldRemovalPolicy = oneOf('coldRemovalPolicy', coldRemovalPolicies, 'retain');
   const bucketSuffix = str('bucket_suffix');
 
   // 組み合わせの確認
   if (exposure === 'functionUrl' && auth === 'apiKey')
-    errors.push('-c auth=apiKey は REST API（restPublic / restPrivate）でだけ使えます。関数 URL は IAM 認証のみです');
-  if (exposure === 'restPrivate' && !vpcEndpointId)
-    errors.push('-c exposure=restPrivate のときは -c vpcEndpointId=vpce-xxxx（execute-api の VPC エンドポイント）を指定してください');
-  if (exposure !== 'restPrivate' && vpcEndpointId) errors.push('-c vpcEndpointId は exposure=restPrivate のときだけ指定できます');
-  if (vpcEndpointId && !/^vpce-[0-9a-f]{8,17}$/.test(vpcEndpointId)) errors.push(`-c vpcEndpointId=${vpcEndpointId}: vpce- で始まる ID を指定してください`);
+    errors.push('-c auth=apiKey works only with the REST API (restPublic / restPrivate). Function URLs support IAM auth only');
+  if (exposure === 'restPrivate' && !vpcEndpointId) errors.push('-c exposure=restPrivate requires -c vpcEndpointId=vpce-xxxx (an execute-api VPC endpoint)');
+  if (exposure !== 'restPrivate' && vpcEndpointId) errors.push('-c vpcEndpointId can be used only with exposure=restPrivate');
+  if (vpcEndpointId && !/^vpce-[0-9a-f]{8,17}$/.test(vpcEndpointId)) errors.push(`-c vpcEndpointId=${vpcEndpointId}: must be an ID that starts with vpce-`);
   if (grafanaRoleTrust && !/^arn:aws[a-z-]*:iam::\d{12}:(root|role\/.+|user\/.+)$/.test(grafanaRoleTrust)) {
-    errors.push(`-c grafanaRoleTrust=${grafanaRoleTrust}: IAM ロール / ユーザー / アカウント（:root）の ARN を指定してください`);
+    errors.push(`-c grafanaRoleTrust=${grafanaRoleTrust}: must be the ARN of an IAM role / user / account (:root)`);
   }
   if (auth === 'apiKey' && (grafanaUser || grafanaRoleTrust))
-    errors.push('-c grafanaUser / grafanaRoleTrust は auth=iam のときだけ使えます（API キー認証では IAM の権限を使わないため）');
+    errors.push('-c grafanaUser / grafanaRoleTrust can be used only with auth=iam (API key auth does not use IAM permissions)');
 
   if (!cold && (str('coldIngest') || str('coldScanLimitGb') || str('coldRemovalPolicy')))
-    errors.push('-c coldIngest / coldScanLimitGb / coldRemovalPolicy は -c cold=true のときだけ指定できます');
+    errors.push('-c coldIngest / coldScanLimitGb / coldRemovalPolicy can be used only with -c cold=true');
   if (bucketSuffix && !/^[a-z0-9][a-z0-9-]{0,24}$/.test(bucketSuffix))
-    errors.push(`-c bucket_suffix=${bucketSuffix}: 英小文字・数字・- の 25 文字以内で指定してください`);
+    errors.push(`-c bucket_suffix=${bucketSuffix}: use up to 25 lowercase letters, digits, and -`);
 
-  if (errors.length > 0) throw new ConfigError(`デプロイオプションに誤りがあります\n${errors.map((e) => `  - ${e}`).join('\n')}`);
+  if (errors.length > 0) throw new ConfigError(`The deploy options have errors\n${errors.map((e) => `  - ${e}`).join('\n')}`);
   return {
     exposure,
     auth,
@@ -106,19 +105,19 @@ export function checkOptionsAgainstConfig(datasets: Record<string, ResolvedDatas
     .filter(([, d]) => d.cold)
     .map(([name]) => name);
   if (coldNames.length > 0 && !o.cold) {
-    errors.push(`datasets.yaml の ${coldNames.join(', ')} に cold がありますが、-c cold=true が指定されていません（コールドストアが作られません）`);
+    errors.push(`${coldNames.join(', ')} in datasets.yaml have cold, but -c cold=true is not set (the cold storage would not be created)`);
   }
   if (o.cold && coldNames.length === 0) {
-    errors.push('-c cold=true が指定されていますが、datasets.yaml に cold を書いたデータセットがありません');
+    errors.push('-c cold=true is set, but no dataset in datasets.yaml has cold');
   }
   if (o.cold && o.coldIngest === 'scheduled') {
     // 定期実行は前日分を Query で読むため、キーを列挙できる必要がある（Scan はしない）
     for (const name of coldNames) {
       const d = datasets[name];
       if (!d.keys.values && !d.keys.list) {
-        errors.push(`datasets.${name}: -c coldIngest=scheduled では、キーを列挙するため keys.values か keys.list が必要です（Scan はしません）`);
+        errors.push(`datasets.${name}: -c coldIngest=scheduled requires keys.values or keys.list to list the keys (no Scan is used)`);
       }
     }
   }
-  if (errors.length > 0) throw new ConfigError(`設定ファイルとデプロイオプションが合っていません\n${errors.map((e) => `  - ${e}`).join('\n')}`);
+  if (errors.length > 0) throw new ConfigError(`The configuration file and the deploy options do not match\n${errors.map((e) => `  - ${e}`).join('\n')}`);
 }

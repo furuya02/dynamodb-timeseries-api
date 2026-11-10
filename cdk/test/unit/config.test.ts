@@ -63,12 +63,12 @@ defaults:
 
 describe('loadConfig: 誤り', () => {
   it('ファイルがない / YAML として読めない', () => {
-    expect(() => loadConfig(path.join(dir, 'none.yaml'))).toThrow('設定ファイルが見つかりません');
-    expect(errorOf('datasets: [')).toContain('YAML として読み込めません');
+    expect(() => loadConfig(path.join(dir, 'none.yaml'))).toThrow('Configuration file not found');
+    expect(errorOf('datasets: [')).toContain('Cannot parse as YAML');
   });
 
   it('datasets が空', () => {
-    expect(errorOf('datasets: {}')).toContain('datasets を 1 つ以上定義してください');
+    expect(errorOf('datasets: {}')).toContain('Define at least one dataset');
   });
 
   it('型の誤りは、どのデータセットのどの項目かを一覧で示し、組み合わせの誤りが後で出ることを注記する', () => {
@@ -83,22 +83,18 @@ datasets:
     limits: { maxRange: 1y }
     unknown: 1
 `);
-    expect(msg).toContain('datasets.Bad-Name: データセット名は英小文字で始まり');
-    expect(msg).toContain('datasets.Bad-Name.table: DynamoDB のテーブル名として不正です');
+    expect(msg).toContain('datasets.Bad-Name: Dataset names must start with a lowercase letter');
+    expect(msg).toContain('datasets.Bad-Name.table: Not a valid DynamoDB table name');
     expect(msg).toContain('datasets.Bad-Name.sortKey.format');
-    expect(msg).toContain('datasets.Bad-Name.limits.maxRange: 90m / 12h / 31d の形式で指定してください');
-    expect(msg).toContain('（型の誤りを直すと、項目の組み合わせに関する誤りが追加で表示されることがあります）');
+    expect(msg).toContain('datasets.Bad-Name.limits.maxRange: Use the form 90m / 12h / 31d');
+    expect(msg).toContain('(After fixing type errors, more errors about combinations of settings may be shown)');
   });
 
   it.each([
-    ['{key} がない template', 'partitionKey: { name: pk, template: "room" }', 'partitionKey.template: {key} を含めてください'],
-    [
-      'bucket と日付トークンの不一致',
-      'partitionKey: { name: pk, template: "{key}#{yyyy-MM}", bucket: daily }',
-      'bucket: daily のときは {yyyy-MM-dd} を含めてください',
-    ],
-    ['日付トークンがあるのに bucket がない', 'partitionKey: { name: pk, template: "{key}#{yyyy-MM-dd}" }', 'bucket: daily または monthly を指定してください'],
-    ['bucket なしで partitionKey.timezone', 'partitionKey: { name: pk, timezone: Asia/Tokyo }', 'timezone は bucket: daily / monthly のときだけ'],
+    ['{key} がない template', 'partitionKey: { name: pk, template: "room" }', 'partitionKey.template: Include {key}'],
+    ['bucket と日付トークンの不一致', 'partitionKey: { name: pk, template: "{key}#{yyyy-MM}", bucket: daily }', 'Include {yyyy-MM-dd} when bucket is daily'],
+    ['日付トークンがあるのに bucket がない', 'partitionKey: { name: pk, template: "{key}#{yyyy-MM-dd}" }', 'Set bucket: daily or monthly'],
+    ['bucket なしで partitionKey.timezone', 'partitionKey: { name: pk, timezone: Asia/Tokyo }', 'timezone can be used only with bucket: daily / monthly'],
   ])('組み合わせの誤り: %s', (_label, pk, expected) => {
     const msg = errorOf(`
 datasets:
@@ -110,12 +106,12 @@ datasets:
     fields: [ { name: v } ]
 `);
     expect(msg).toContain(expected);
-    expect(msg).not.toContain('型の誤りを直すと');
+    expect(msg).not.toContain('After fixing type errors');
   });
 
   it.each([
-    ['keys に pattern も values もない', 'keys: {}', 'pattern か values のどちらかを指定してください'],
-    ['不正な正規表現', 'keys: { pattern: "([" }', 'keys.pattern: 正規表現として不正です'],
+    ['keys に pattern も values もない', 'keys: {}', 'Specify pattern or values'],
+    ['不正な正規表現', 'keys: { pattern: "([" }', 'keys.pattern: Not a valid regular expression'],
   ])('組み合わせの誤り: %s', (_label, keys, expected) => {
     if (!expected) return;
     const msg = errorOf(`
@@ -140,9 +136,9 @@ datasets:
     keys: { values: [a] }
     fields: [ { name: ts }, { name: meta.fw, type: string }, { name: fw, alias: meta_fw, type: string } ]
 `);
-    expect(msg).toContain('timezone は format: iso8601 のときだけ');
-    expect(msg).toContain('ソートキーは時刻列として自動で返すため');
-    expect(msg).toContain('列名 meta_fw が重複しています');
+    expect(msg).toContain('timezone can be used only with format: iso8601');
+    expect(msg).toContain('Do not list the sort key in fields');
+    expect(msg).toContain('Duplicate column name meta_fw');
   });
 });
 

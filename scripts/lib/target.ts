@@ -27,7 +27,7 @@ export function resolveAuth(endpoint: string, region: string, apiKey?: string): 
 }
 
 export function describeAuth(auth: Auth): string {
-  if (auth.type === 'iam') return `IAM（SigV4、サービス ${auth.service}、${auth.region}）`;
-  if (auth.type === 'apiKey') return 'API キー';
-  return 'なし（ローカル）';
+  if (auth.type === 'iam') return `IAM (SigV4, service ${auth.service}, ${auth.region})`;
+  if (auth.type === 'apiKey') return 'API key';
+  return 'none (local)';
 }

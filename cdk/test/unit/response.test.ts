@@ -63,6 +63,6 @@ describe('measureResponse', () => {
   it('上限を超えると理由つきの 400', () => {
     const body = toResponse(req(), result);
     expect(() => measureResponse(body, 10)).toThrow(ApiError);
-    expect(() => measureResponse(body, 10)).toThrow(/応答が大きすぎます.*interval で集計する/);
+    expect(() => measureResponse(body, 10)).toThrow(/The response is too large.*Aggregate with interval/);
   });
 });

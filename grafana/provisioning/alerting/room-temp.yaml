@@ -9,7 +9,7 @@ groups:
     interval: 1m
     rules:
       - uid: tsapi-room-temp-high
-        title: 部屋の温度が高い（29℃ 超が 5 分続く）
+        title: Room temperature is high (above 29 °C for 5 minutes)
         condition: C
         data:
           - refId: A
@@ -74,6 +74,6 @@ groups:
         execErrState: Error
         for: 5m
         annotations:
-          summary: "{{ $labels.key }} の温度が {{ $values.B }}℃ です"
+          summary: "Temperature in {{ $labels.key }} is {{ $values.B }} °C"
         labels:
           source: dynamodb-timeseries-api

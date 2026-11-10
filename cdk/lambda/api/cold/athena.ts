@@ -65,13 +65,13 @@ export function createAthenaRunner(client: Pick<AthenaClient, 'send'>, o: Athena
         if (state === 'FAILED' || state === 'CANCELLED') {
           const reason = q?.Status?.StateChangeReason ?? state;
           // ワークグループの読み込み量の上限（BytesScannedCutoffPerQuery）に当たった場合も、ここで理由を返す
-          throw new ApiError(502, `コールドストア（Athena）のクエリが失敗しました: ${reason}`);
+          throw new ApiError(502, `The cold storage (Athena) query failed: ${reason}`);
         }
         if (now() - started + wait > timeoutMs) {
           await client.send(new StopQueryExecutionCommand({ QueryExecutionId: id }));
           throw new ApiError(
             504,
-            `コールドストア（Athena）のクエリが ${timeoutMs / 1000} 秒で終わりませんでした。期間を短くするか、interval を大きくしてください`,
+            `The cold storage (Athena) query did not finish within ${timeoutMs / 1000} seconds. Shorten the time range or use a larger interval`,
           );
         }
         await sleep(wait);

@@ -51,7 +51,7 @@ export function createScheduledIngest(
 
   new scheduler.Schedule(scope, 'ColdIngestSchedule', {
     scheduleName: SCHEDULED_INGEST_FUNCTION,
-    description: '前日分（UTC）をコールドストアに取り込む',
+    description: 'Ingests the previous day (UTC) into the cold storage',
     schedule: scheduler.ScheduleExpression.cron({ minute: '0', hour: '1', timeZone: cdk.TimeZone.ETC_UTC }),
     target: new targets.LambdaInvoke(fn, { retryAttempts: 2 }),
   });

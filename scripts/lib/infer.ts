@@ -54,18 +54,18 @@ export function inferDataset(input: InferInput): InferResult {
   const others = input.items.filter((i) => !match(i[input.sortKey]));
   if (others.length > 0) {
     notes.push(
-      `ソートキーの形式が違うアイテムが ${others.length} 件ありました（例: ${input.partitionKey}=${scalar(others[0][input.partitionKey])}, ${input.sortKey}=${scalar(others[0][input.sortKey])}）。推定から除いています`,
+      `${others.length} items have a different sort key format (e.g. ${input.partitionKey}=${scalar(others[0][input.partitionKey])}, ${input.sortKey}=${scalar(others[0][input.sortKey])}). They were excluded from the inference`,
     );
   }
   const items = input.items.filter((i) => match(i[input.sortKey]));
   const pkValues = items.map((i) => scalar(i[input.partitionKey])).filter((v): v is string => v !== undefined);
   const { partitionKey, keys } = inferPartitionKey(input.partitionKey, pkValues, notes);
   notes.push(
-    `見つかったキー: ${keys.slice(0, 10).join(', ')}${keys.length > 10 ? ` ほか ${keys.length - 10} 件` : ''}。keys.pattern はその形から作った案です（すべてのキーを読んだわけではありません）`,
+    `Keys found: ${keys.slice(0, 10).join(', ')}${keys.length > 10 ? ` and ${keys.length - 10} more` : ''}. keys.pattern is a proposal based on their shape (not all keys were read)`,
   );
   const exclude = new Set([input.partitionKey, input.sortKey, ...input.tableKeys]);
   const fields = inferFields(items, exclude, notes);
-  if (fields.length === 0) notes.push('キー以外の属性が見つかりませんでした。fields に返したい属性を書いてください');
+  if (fields.length === 0) notes.push('No attributes other than the keys were found. List the attributes to return in fields');
 
   return {
     name: input.name || datasetName(input.table),
@@ -102,9 +102,9 @@ export function inferSortKey(
 ): { sortKey: Record<string, string>; match: (v: AttributeValue | undefined) => boolean } {
   const notePrefixes = (counts: Map<string, number>, chosen: string) => {
     if (counts.size <= 1) return;
-    const list = [...counts].map(([p, n]) => `${p || '（なし）'} ${n} 件`).join('、');
+    const list = [...counts].map(([p, n]) => `${p || '(none)'}: ${n}`).join(', ');
     notes.push(
-      `ソートキーに複数の種類があります（${list}）。多い ${chosen || '（プレフィックスなし）'} で推定しました。ほかの種類は prefix を変えた別のデータセットにしてください`,
+      `The sort key has multiple types (${list}). Inferred from the most common one, ${chosen || '(no prefix)'}. Define the other types as separate datasets with a different prefix`,
     );
   };
 
@@ -123,7 +123,7 @@ export function inferSortKey(
     const [prefix, counts] = majority(isoMatches.map((m) => m[1]));
     notePrefixes(counts, prefix);
     if (!isoMatches.filter((m) => m[1] === prefix).every((m) => m[3])) {
-      notes.push('ソートキーにタイムゾーンの表記がありません。UTC 以外で保存している場合は sortKey.timezone を指定してください（例: Asia/Tokyo）');
+      notes.push('The sort key has no time zone. If times are stored in a zone other than UTC, set sortKey.timezone (e.g. Asia/Tokyo)');
     }
     return { sortKey: { name, format: 'iso8601', ...(prefix ? { prefix } : {}) }, match: (v) => v?.S !== undefined && ISO.exec(v.S)?.[1] === prefix };
   }
@@ -138,7 +138,7 @@ export function inferSortKey(
     return { sortKey: { name, format: ms ? 'epoch_ms' : 'epoch_s', prefix }, match: (v) => v?.S !== undefined && re.test(v.S) };
   }
 
-  notes.push(`ソートキーの時刻形式を推定できませんでした（例: ${scalar(values[0])}）。format を確認してください`);
+  notes.push(`Could not infer the time format of the sort key (e.g. ${scalar(values[0])}). Check format`);
   return { sortKey: { name, format: 'epoch_ms' }, match: () => true };
 }
 
@@ -151,14 +151,13 @@ export function inferPartitionKey(name: string, values: string[], notes: string[
     values.length > 0 && values.every((s) => DATE.test(s)) ? 'daily' : values.length > 0 && values.every((s) => MONTH.test(s)) ? 'monthly' : 'none';
   const token = bucket === 'daily' ? '{yyyy-MM-dd}' : '{yyyy-MM}';
   const stripped = bucket === 'none' ? values : values.map((s) => s.replace(bucket === 'daily' ? DATE : /\d{4}-\d{2}/, DATE_PLACEHOLDER));
-  if (bucket !== 'none')
-    notes.push(`パーティションキーが日付で分かれています（bucket: ${bucket}）。日付の区切りが UTC 以外なら partitionKey.timezone を指定してください`);
+  if (bucket !== 'none') notes.push(`The partition key is split by date (bucket: ${bucket}). If the date boundary is not UTC, set partitionKey.timezone`);
 
   const distinct = [...new Set(stripped)];
   if (distinct.length === 0) return { partitionKey: { name }, keys: [] };
   const segs = distinct.map((s) => s.split(SEP)); // 偶数番目が値、奇数番目が区切り文字
   if (!segs.every((x) => x.length === segs[0].length)) {
-    notes.push('パーティションキーの形がアイテムごとに違うため、template を推定できませんでした。partitionKey.template を確認してください');
+    notes.push('Could not infer template because the partition key shape differs between items. Check partitionKey.template');
     return {
       partitionKey: { name, ...(bucket !== 'none' ? { template: `{key}#${token}`, bucket } : {}) },
       keys: distinct.map((s) => s.replace(DATE_PLACEHOLDER, '')),
@@ -211,12 +210,12 @@ export function inferFields(items: Item[], exclude: Set<string>, notes: string[]
                 : 'json';
       if (!types.has(name)) types.set(name, new Set());
       types.get(name)?.add(t);
-      if (v.M) notes.push(`${name} は Map です。中の値を列にする場合は ${name}.${Object.keys(v.M)[0] ?? '子の属性名'} のように書けます`);
+      if (v.M) notes.push(`${name} is a Map. To use a value inside it as a column, write ${name}.${Object.keys(v.M)[0] ?? 'child'}`);
     }
   }
   return [...types].map(([name, ts]) => {
     ts.delete('null');
-    if (ts.size > 1) notes.push(`${name} は型が混在しています（${[...ts].join(' / ')}）。type を確認してください`);
+    if (ts.size > 1) notes.push(`${name} has mixed types (${[...ts].join(' / ')}). Check type`);
     return { name, type: ts.size === 1 ? [...ts][0] : 'string' };
   });
 }

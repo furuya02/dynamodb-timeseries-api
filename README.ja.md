@@ -8,13 +8,14 @@
 Amazon DynamoDB の時系列データを、Grafana（Infinity データソース）から読むための API です。
 設定ファイル 1 つ（`config/datasets.yaml`）に「どのテーブルの、どのキーの、どの属性を返すか」を書き、AWS CDK でデプロイします。
 
-```
-Grafana（Infinity）──SigV4 / API キー──▶ API Gateway（REST）または Lambda 関数 URL
-                                              │
-                                              ▼
-                                   Lambda（Node.js 24、arm64）──Query──▶ DynamoDB
-                                   config/datasets.yaml の内容を同梱
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
+  <img alt="サンプルダッシュボード" src="docs/images/dashboard-light.png">
+</picture>
+
+![構成図](docs/images/architecture.png)
+
+構成: Grafana は SigV4（または API キー）で API を呼び、Lambda は設定したテーブルだけを Query で読みます。コールドストア（任意）は [docs/ja/09-cold-storage.md](docs/ja/09-cold-storage.md) を参照してください。
 
 ## 特徴
 

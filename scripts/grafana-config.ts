@@ -26,6 +26,6 @@ const root = path.join(import.meta.dirname, '..');
 const file = path.join(root, 'grafana/provisioning/generated/datasources/dynamodb-timeseries-api.yaml');
 fs.mkdirSync(path.dirname(file), { recursive: true });
 fs.writeFileSync(file, config.yaml);
-console.log(`${path.relative(root, file)} を作りました（${config.url}）`);
+console.log(`Created ${path.relative(root, file)} (${config.url})`);
 for (const line of config.howTo) console.log(line);
-console.log('起動: pnpm grafana-up → http://localhost:3000/');
+console.log('Start: pnpm grafana-up → http://localhost:3000/');

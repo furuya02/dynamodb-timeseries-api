@@ -148,3 +148,26 @@ pnpm cdk-destroy -c sample=true -c grafanaUser=true
 ```
 
 IAM の変更の反映には数分かかることがあります。同じプリンシパルの権限を切り替えて試すと結果が揺れるので、権限の組み合わせを比べるときは、組み合わせごとに別の IAM ユーザーを使ってください。
+
+## 8.10 手順書の画像
+
+画像は `docs/images/` にあります。
+
+| 種類 | ファイル | 更新のしかた |
+|---|---|---|
+| 構成図 | `architecture` / `exposure` / `auth` / `hot-cold`（`.drawio` と `.png`） | draw.io で `.drawio` を開いて直し、PNG に書き出す（`drawio -x -f png -s 2 -b 16 -o <名前>.png <名前>.drawio`） |
+| Grafana の画面 | `<名前>-light.png` / `<名前>-dark.png` | `pnpm docs-screenshots`（下記） |
+| 流れ図 | 手順書の中の Mermaid | Markdown を直接直す（GitHub が描画する） |
+| ソーシャルプレビュー | `social-preview.png`（1280×640） | GitHub のリポジトリの Settings → Social preview でアップロードする |
+
+Grafana の画面は、ライトとダークの両方を撮り、`<picture>` で閲覧者のテーマに合わせて切り替えて表示します。
+
+```bash
+pnpm --dir scripts exec playwright install chromium   # 初回だけ
+pnpm grafana-config && pnpm grafana-up                # データの入った Grafana を起動しておく
+pnpm docs-screenshots                                 # docs/images/<名前>-light.png / -dark.png を上書き
+pnpm docs-screenshots --cold                          # コールドストアの画面も撮る（cold=true と pnpm seed --cold-days 30 が必要）
+pnpm docs-screenshots --only dashboard,meta           # 一部だけ撮り直す
+```
+
+画面の構成（URL、画面の高さ、撮る前の操作）は `scripts/docs-screenshots.ts` の `shots` にあります。Grafana の版が変わって画面の要素が変わったときは、ここを直します。

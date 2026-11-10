@@ -30,9 +30,9 @@ export interface KeyList {
 
 /** データセット名を検証して返す */
 export function findDataset(datasets: Datasets, name: string | undefined): ResolvedDataset {
-  if (!name) throw new ApiError(400, 'dataset を指定してください');
+  if (!name) throw new ApiError(400, 'Specify dataset');
   const d = datasets[name];
-  if (!d) throw new ApiError(404, `データセット ${name} は定義されていません`);
+  if (!d) throw new ApiError(404, `Dataset ${name} is not defined`);
   return d;
 }
 

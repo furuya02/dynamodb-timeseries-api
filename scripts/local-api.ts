@@ -38,6 +38,6 @@ createServer(async (req, res) => {
   res.writeHead(status, { 'content-type': 'application/json', ...headers });
   res.end(JSON.stringify(body));
 }).listen(Number(args.port), args.host, () => {
-  console.error(`http://localhost:${args.port}/ で待ち受けています（datasets: ${Object.keys(datasets).join(', ')}）`);
-  console.error(`DynamoDB: ${process.env.AWS_ENDPOINT_URL_DYNAMODB ?? 'AWS（環境の認証情報）'}`);
+  console.error(`Listening on http://localhost:${args.port}/ (datasets: ${Object.keys(datasets).join(', ')})`);
+  console.error(`DynamoDB: ${process.env.AWS_ENDPOINT_URL_DYNAMODB ?? 'AWS (credentials from the environment)'}`);
 });

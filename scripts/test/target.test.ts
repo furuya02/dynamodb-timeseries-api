@@ -14,8 +14,8 @@ describe('resolveAuth', () => {
   });
 
   it('表示用の説明', () => {
-    expect(describeAuth({ type: 'iam', service: 'lambda', region: 'us-east-1' })).toBe('IAM（SigV4、サービス lambda、us-east-1）');
-    expect(describeAuth({ type: 'none' })).toBe('なし（ローカル）');
+    expect(describeAuth({ type: 'iam', service: 'lambda', region: 'us-east-1' })).toBe('IAM (SigV4, service lambda, us-east-1)');
+    expect(describeAuth({ type: 'none' })).toBe('none (local)');
   });
 });
 

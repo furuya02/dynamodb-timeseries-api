@@ -21,7 +21,7 @@ describe('columnName / selectColumns', () => {
 
   it('定義にない列は 400 と使える列の一覧', () => {
     expect(() => selectColumns(d, 'secret')).toThrow(ApiError);
-    expect(() => selectColumns(d, 'secret')).toThrow('使える列: temp_c, meta_fw, humidity');
+    expect(() => selectColumns(d, 'secret')).toThrow('Available columns: temp_c, meta_fw, humidity');
   });
 });
 

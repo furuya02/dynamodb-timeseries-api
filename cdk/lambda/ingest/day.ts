@@ -36,14 +36,14 @@ export const partitionPrefix = (dataset: string, date: string): string => `${COL
 /** 日付（yyyy-MM-dd、UTC）を検証して、その日の範囲（UNIX ミリ秒、両端を含む）を返す */
 export function dayRange(date: string): { from: number; to: number } {
   const from = Date.parse(`${date}T00:00:00Z`);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(from)) throw new Error(`日付は yyyy-MM-dd で指定してください: ${date}`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(from)) throw new Error(`Specify the date as yyyy-MM-dd: ${date}`);
   return { from, to: from + DAY_MS - 1 };
 }
 
 /** キーの一覧（keys.values か keys.list）。Scan はしないので、どちらもない場合はエラー */
 export async function ingestKeys(client: QueryClient, d: ResolvedDataset): Promise<string[]> {
   const list = await listKeys(client, { ...d, limits: { ...d.limits, ...NO_LIMITS } });
-  if (list.source === 'none') throw new Error('コールドストアへの取り込みには keys.values か keys.list が必要です（Scan はしません）');
+  if (list.source === 'none') throw new Error('Ingesting into cold storage requires keys.values or keys.list (no Scan is used)');
   return list.keys.map((k) => k.key);
 }
 

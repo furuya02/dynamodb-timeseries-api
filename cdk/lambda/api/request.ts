@@ -25,26 +25,26 @@ const UNRESOLVED = /\$\{|\$__/;
 /** クエリパラメータを検証し、問い合わせに使う形にする。誤りは理由つきの ApiError（400 / 404） */
 export function parseQueryRequest(datasets: Datasets, p: QueryParams): QueryRequest {
   rejectUnresolvedVariables(p);
-  const name = requireValue(p.dataset, 'dataset を指定してください');
+  const name = requireValue(p.dataset, 'Specify dataset');
   const dataset = datasets[name];
-  if (!dataset) throw new ApiError(404, `データセット ${name} は定義されていません`);
+  if (!dataset) throw new ApiError(404, `Dataset ${name} is not defined`);
 
   const keys = parseKeys(dataset, p.key);
   const from = parseTime(p.from, 'from');
   const to = parseTime(p.to, 'to');
-  if (from > to) throw new ApiError(400, 'from は to 以前の時刻を指定してください');
+  if (from > to) throw new ApiError(400, 'from must be earlier than or equal to to');
   // コールドストアを読むデータセットでは、DynamoDB を読む期間は hotRetention までに収まるため cold.maxRange を使う
   const [rangeText, rangeName] = dataset.cold ? [dataset.cold.maxRange, 'cold.maxRange'] : [dataset.limits.maxRange, 'limits.maxRange'];
   const maxRange = parseDuration(rangeText) ?? Number.POSITIVE_INFINITY;
-  if (to - from > maxRange) throw new ApiError(400, `期間が長すぎます。${rangeText} 以内にしてください（${rangeName}）`);
+  if (to - from > maxRange) throw new ApiError(400, `The time range is too long. Keep it within ${rangeText} (${rangeName})`);
 
   const interval = p.interval === undefined || p.interval === '' ? undefined : parseInterval(p.interval);
   const agg = parseAgg(p.agg, interval);
   const latest = parseLatest(p.latest);
-  if (latest && interval !== undefined) throw new ApiError(400, 'latest と interval は同時に指定できません');
+  if (latest && interval !== undefined) throw new ApiError(400, 'latest and interval cannot be used together');
   const format = parseFormat(p.format);
   const tz = p.tz ?? defaultTimezone(dataset);
-  if (!isTimezone(tz)) throw new ApiError(400, 'tz は UTC、+09:00 のようなオフセット、または Asia/Tokyo のような IANA 名を指定してください');
+  if (!isTimezone(tz)) throw new ApiError(400, 'tz must be UTC, an offset such as +09:00, or an IANA name such as Asia/Tokyo');
 
   // 集計するときは from / to を区切りに合わせて丸める。先頭の区切りも欠けずにそろい、
   // Grafana の自動更新で少しずつずれた時刻でもキャッシュに当たる
@@ -62,7 +62,7 @@ function rejectUnresolvedVariables(p: QueryParams): void {
     if (typeof v === 'string' && UNRESOLVED.test(v)) {
       throw new ApiError(
         400,
-        `${k}=${v}: Grafana の変数が置き換えられていません。アラートのクエリでは、ダッシュボードの変数と $__interval_ms は使えません（key は値を直接書き、interval は 5m のような固定値か latest=1 を使ってください）`,
+        `${k}=${v}: a Grafana variable was not replaced. Alert queries cannot use dashboard variables or $__interval_ms (write the key values directly, and use a fixed interval such as 5m or latest=1)`,
       );
     }
   }
@@ -83,10 +83,10 @@ function parseKeys(d: ResolvedDataset, param: string | undefined): string[] {
         .filter(Boolean),
     ),
   ];
-  if (keys.length === 0) throw new ApiError(400, 'key を指定してください（複数の場合はカンマ区切り）');
-  if (keys.length > d.limits.maxKeys) throw new ApiError(400, `key は ${d.limits.maxKeys} 個まで指定できます（limits.maxKeys）`);
+  if (keys.length === 0) throw new ApiError(400, 'Specify key (comma-separated for multiple keys)');
+  if (keys.length > d.limits.maxKeys) throw new ApiError(400, `Up to ${d.limits.maxKeys} keys can be specified (limits.maxKeys)`);
   for (const k of keys) {
-    if (!isAllowedKey(d, k)) throw new ApiError(400, `key ${k} は許可されていません（keys.pattern / keys.values）`);
+    if (!isAllowedKey(d, k)) throw new ApiError(400, `Key ${k} is not allowed (keys.pattern / keys.values)`);
   }
   return keys;
 }
@@ -106,33 +106,33 @@ export function isAllowedKey(d: ResolvedDataset, k: string): boolean {
 }
 
 function parseTime(v: string | undefined, label: 'from' | 'to'): number {
-  if (!v || !/^\d{1,16}$/.test(v)) throw new ApiError(400, `${label} を UNIX 時刻（ミリ秒）で指定してください。Grafana では \${__${label}} を使います`);
+  if (!v || !/^\d{1,16}$/.test(v)) throw new ApiError(400, `Specify ${label} as UNIX time in milliseconds. In Grafana, use \${__${label}}`);
   return Number(v);
 }
 
 /** interval は Grafana の $__interval_ms（ミリ秒の整数）か、30s / 5m / 1h / 1d の形式 */
 export function parseInterval(v: string): number {
   const ms = /^[1-9]\d{0,12}$/.test(v) ? Number(v) : parseDuration(v);
-  if (ms === undefined) throw new ApiError(400, 'interval はミリ秒（Grafana では $__interval_ms）か、30s / 5m / 1h / 1d の形式で指定してください');
+  if (ms === undefined) throw new ApiError(400, 'interval must be milliseconds ($__interval_ms in Grafana) or 30s / 5m / 1h / 1d');
   return ms;
 }
 
 function parseAgg(v: string | undefined, interval: number | undefined): Agg {
   if (v === undefined || v === '') return 'avg';
-  if (!(AGGS as readonly string[]).includes(v)) throw new ApiError(400, `agg は ${AGGS.join(' / ')} のいずれかを指定してください`);
-  if (interval === undefined) throw new ApiError(400, 'agg は interval と一緒に指定してください');
+  if (!(AGGS as readonly string[]).includes(v)) throw new ApiError(400, `agg must be one of ${AGGS.join(' / ')}`);
+  if (interval === undefined) throw new ApiError(400, 'agg requires interval');
   return v as Agg;
 }
 
 function parseLatest(v: string | undefined): boolean {
   if (v === undefined) return false;
-  if (!/^(1|true)$/.test(v)) throw new ApiError(400, 'latest は 1 を指定してください');
+  if (!/^(1|true)$/.test(v)) throw new ApiError(400, 'latest must be 1');
   return true;
 }
 
 function parseFormat(v: string | undefined): Format {
   if (v === undefined || v === '') return 'long';
-  if (!(FORMATS as readonly string[]).includes(v)) throw new ApiError(400, `format は ${FORMATS.join(' / ')} のいずれかを指定してください`);
+  if (!(FORMATS as readonly string[]).includes(v)) throw new ApiError(400, `format must be one of ${FORMATS.join(' / ')}`);
   return v as Format;
 }
 

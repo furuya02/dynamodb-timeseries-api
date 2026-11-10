@@ -4,11 +4,7 @@ English | [日本語](../ja/09-cold-storage.md) ｜ [Documentation index](../REA
 
 Recent data (hot) is read from DynamoDB and older data (cold) from S3 + Athena, and **one query returns them as a single series**. On the Grafana side, it is still the same single Infinity query.
 
-```
-                         ┌─ after now − hotRetention ─→ DynamoDB (raw data, seconds to minutes)
-GET /query (e.g. 90 d) ──┤                                                    ├─→ same buckets are merged into one series
-                         └─ before that ─────────────→ Athena (Parquet on S3, 1-minute rollups)
-```
+![Hot + cold architecture](../images/hot-cold.png)
 
 - Keep only recent data (7 days by default) in DynamoDB (TTL), which reduces storage cost and the amount read
 - Cold storage keeps the count, sum, min, max, and last value per minute. These can be merged across buckets, so averages and counts stay correct even for a bucket that spans the boundary
@@ -129,6 +125,15 @@ After writing 7 days to DynamoDB, it writes the 30 days before that directly to 
 
 ## 9.4 Queries
 
+```mermaid
+flowchart LR
+  C["from … boundary<br/>Athena: 1-minute rollups"] --> M["buckets merged<br/>(count, sum, min, max, last)"]
+  H["boundary … to<br/>DynamoDB: raw items"] --> M
+  M --> R["one series<br/>in one response"]
+  B(("boundary =<br/>now − hotRetention")) -.- C
+  B -.- H
+```
+
 The parameters are unchanged.
 
 | Query | Cold range |
@@ -152,6 +157,20 @@ The parameters are unchanged.
 | `truncated` | Whether rows exceeded `limits.maxItems` and were cut (`meta.truncatedBy` is `maxItems`) |
 
 ### Measurements (ap-northeast-1, November 2026)
+
+37 days in one panel (the last 7 days from DynamoDB, older data from S3 + Athena). The lines connect at the boundary.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/cold-37-days-dark.png">
+  <img alt="37 days of temperature (hot + cold)" src="../images/cold-37-days-light.png">
+</picture>
+
+Add a `cold.bytesScanned` column (Cold bytes) to the meta table to see how much Athena scanned ("API response (meta)" in the sample dashboard).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/cold-meta-dark.png">
+  <img alt="Data scanned by Athena (Cold bytes)" src="../images/cold-meta-light.png">
+</picture>
 
 Measured with the sample (3 rooms, 7 days in DynamoDB + 30 days in cold storage).
 

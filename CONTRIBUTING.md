@@ -43,6 +43,7 @@ See [Development](docs/en/08-development.md) for the code structure and the test
 - Keep IAM permissions minimal. Explain any new permission in the pull request
 - Do not change CloudFormation logical IDs of existing resources (it replaces resources in existing deployments). If it is unavoidable, say so in the CHANGELOG
 - Keep error messages actionable: say what is wrong and how to fix it
+- Write user-facing messages (API errors, validation errors, CLI output) in English
 - Do not include secrets, access keys, or account IDs in code, tests, docs, or screenshots
 
 ## License

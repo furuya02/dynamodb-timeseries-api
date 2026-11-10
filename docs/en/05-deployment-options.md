@@ -6,6 +6,25 @@ With `pnpm cdk-deploy -c name=value`, you can choose the exposure type and the a
 
 ## 5.1 Options
 
+A guide to choosing a combination:
+
+```mermaid
+flowchart TD
+  Q1{"Where does Grafana run?"}
+  Q1 -->|"inside your VPC,<br/>no internet path"| P["exposure=restPrivate<br/>+ vpcEndpointId"]
+  Q1 -->|"anywhere else"| Q2{"Need API keys<br/>or usage plans?"}
+  Q2 -->|yes| K["auth=apiKey<br/>(restPublic)"]
+  Q2 -->|no| Q3{"Skip API Gateway?"}
+  Q3 -->|yes| F["exposure=functionUrl"]
+  Q3 -->|no| R["restPublic + iam<br/>(default)"]
+  P --> W{"How does Grafana<br/>get AWS credentials?"}
+  F --> W
+  R --> W
+  W -->|"access key"| U["-c grafanaUser=true"]
+  W -->|"assume a role"| T["-c grafanaRoleTrust=ARN"]
+  W -->|"its own role (EC2, ...)"| E["attach GrafanaPolicyArn"]
+```
+
 | Name | Default | Values |
 |---|---|---|
 | `config` | `config/datasets.yaml` | Path of the configuration file |
@@ -22,6 +41,8 @@ With `pnpm cdk-deploy -c name=value`, you can choose the exposure type and the a
 `pnpm cdk-destroy` deletes the whole stack. When you delete, it is safest to pass the same `-c` as for the deployment (the examples in these docs do so).
 
 ## 5.2 Exposure type (exposure)
+
+![Exposure types](../images/exposure.png)
 
 | Value | Entry point | Suited for | Cost |
 |---|---|---|---|
@@ -42,6 +63,8 @@ The resource policy denies calls from anything other than the specified VPC endp
 restPrivate has been checked in the synth output, but calls from an actual VPC have not been tested.
 
 ## 5.3 Authentication method (auth)
+
+![Authentication methods](../images/auth.png)
 
 | Value | How it works | Available exposure types |
 |---|---|---|

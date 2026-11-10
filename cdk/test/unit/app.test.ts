@@ -54,8 +54,8 @@ describe('createApi: /query', () => {
   it('検証エラーは 400 とログの error', async () => {
     const { api, logs } = setup();
     const r = await api.handle('/query', { dataset: 'ds' });
-    expect(r).toEqual({ status: 400, body: { error: 'key を指定してください（複数の場合はカンマ区切り）' } });
-    expect(logs[0]).toMatchObject({ status: 400, error: 'key を指定してください（複数の場合はカンマ区切り）', cache: undefined });
+    expect(r).toEqual({ status: 400, body: { error: 'Specify key (comma-separated for multiple keys)' } });
+    expect(logs[0]).toMatchObject({ status: 400, error: 'Specify key (comma-separated for multiple keys)', cache: undefined });
   });
 
   it('DynamoDB のエラーは 500 とエラー名・内容', async () => {
@@ -75,7 +75,7 @@ describe('createApi: パスの振り分け', () => {
     expect((await api.handle('/v1/datasets/', {})).status).toBe(200);
     const keys = await api.handle('/keys', { dataset: 'ds' });
     expect(keys).toEqual({ status: 200, body: [{ key: 'a' }, { key: 'b' }], headers: undefined });
-    expect(await api.handle('/v1/foo', {})).toEqual({ status: 404, body: { error: 'パスは /query、/datasets、/keys のいずれかです' } });
+    expect(await api.handle('/v1/foo', {})).toEqual({ status: 404, body: { error: 'The path must be /query, /datasets, or /keys' } });
     expect(logs.map((l) => l.type)).toEqual(['datasets', 'keys', 'unknown']);
   });
 

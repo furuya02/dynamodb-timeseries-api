@@ -50,6 +50,11 @@ Select "Connections" → "Data sources" → "Add new data source" → "Infinity"
 
 "Save & test" calls /datasets. If it succeeds, the setup is complete.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/datasource-dark.png">
+  <img alt="Data source settings (Authentication)" src="../images/datasource-light.png">
+</picture>
+
 - The default Service is `monitoring`. Always change it to `execute-api` or `lambda` (otherwise the signature does not match and you get 403)
 - When Base URL is set, the query URLs (`query`, `keys`) are appended to it. In this case, the "Security" Allowed hosts setting is not needed
 

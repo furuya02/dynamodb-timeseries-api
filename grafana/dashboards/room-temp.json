@@ -1,7 +1,7 @@
 {
   "uid": "tsapi-room-temp",
-  "title": "部屋の温度と湿度（dynamodb-timeseries-api サンプル）",
-  "description": "pnpm seed で入れたサンプルデータを、dynamodb-timeseries-api 経由で表示します",
+  "title": "Room temperature and humidity (dynamodb-timeseries-api sample)",
+  "description": "Shows the sample data loaded by pnpm seed through dynamodb-timeseries-api",
   "tags": ["dynamodb-timeseries-api", "dynamodb"],
   "timezone": "browser",
   "schemaVersion": 41,
@@ -16,7 +16,7 @@
     "list": [
       {
         "name": "key",
-        "label": "部屋",
+        "label": "Room",
         "type": "query",
         "datasource": {
           "type": "yesoreyeram-infinity-datasource",
@@ -73,13 +73,13 @@
   "panels": [
     {
       "id": 1,
-      "title": "温度（表示間隔ごとの平均）",
+      "title": "Temperature (average per interval)",
       "type": "timeseries",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "tsapi"
       },
-      "description": "interval=${__interval_ms} で API 側が集計します。表示期間を広げても点の数が増えすぎません",
+      "description": "The API aggregates with interval=${__interval_ms}, so widening the time range does not add too many points",
       "gridPos": {
         "h": 9,
         "w": 16,
@@ -174,13 +174,13 @@
     },
     {
       "id": 2,
-      "title": "最新の温度",
+      "title": "Latest temperature",
       "type": "gauge",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "tsapi"
       },
-      "description": "latest=1 でキーごとに最新の 1 件だけを読みます（アラート向けの書き方）",
+      "description": "latest=1 reads only the latest item per key (the form to use for alerts)",
       "gridPos": {
         "h": 9,
         "w": 8,
@@ -294,7 +294,7 @@
     },
     {
       "id": 3,
-      "title": "湿度（表示間隔ごとの平均）",
+      "title": "Humidity (average per interval)",
       "type": "timeseries",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
@@ -395,7 +395,7 @@
     },
     {
       "id": 4,
-      "title": "最新の湿度",
+      "title": "Latest humidity",
       "type": "bargauge",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
@@ -515,13 +515,13 @@
     },
     {
       "id": 5,
-      "title": "日ごとの最高気温（JST）",
+      "title": "Daily max temperature (JST)",
       "type": "barchart",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "tsapi"
       },
-      "description": "interval=1d、agg=max、tz=Asia/Tokyo で JST の 0 時から 1 日ずつ集計します。期間を 7 日以上にすると見やすくなります",
+      "description": "interval=1d, agg=max, tz=Asia/Tokyo aggregates one day at a time from 00:00 JST. Easier to read with a range of 7 days or more",
       "gridPos": {
         "h": 9,
         "w": 16,
@@ -636,13 +636,13 @@
     },
     {
       "id": 6,
-      "title": "API の応答（meta）",
+      "title": "API response (meta)",
       "type": "table",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "tsapi"
       },
-      "description": "温度パネルと同じ問い合わせの meta。読んだ件数（items）と消費 RCU、上限による打ち切り（truncated）、キャッシュの hit / miss を確認できます",
+      "description": "meta of the same query as the temperature panel: items read, consumed RCU, truncation by limits, and cache hit / miss",
       "gridPos": {
         "h": 9,
         "w": 8,
@@ -698,17 +698,17 @@
           "columns": [
             {
               "selector": "points",
-              "text": "点数",
+              "text": "Points",
               "type": "number"
             },
             {
               "selector": "items",
-              "text": "件数",
+              "text": "Items",
               "type": "number"
             },
             {
               "selector": "pages",
-              "text": "ページ",
+              "text": "Pages",
               "type": "number"
             },
             {
@@ -718,18 +718,23 @@
             },
             {
               "selector": "truncated",
-              "text": "打ち切り",
+              "text": "Truncated",
               "type": "boolean"
             },
             {
               "selector": "truncatedBy",
-              "text": "上限",
+              "text": "Limit",
               "type": "string"
             },
             {
               "selector": "cache",
-              "text": "キャッシュ",
+              "text": "Cache",
               "type": "string"
+            },
+            {
+              "selector": "cold.bytesScanned",
+              "text": "Cold bytes",
+              "type": "number"
             }
           ],
           "filters": [],

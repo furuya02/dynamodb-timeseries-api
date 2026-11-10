@@ -15,7 +15,7 @@ const T0 = Date.parse('2025-11-03T00:00:00Z');
 describe('dateRange / lastDays', () => {
   it('両端を含む UTC の日付', () => {
     expect(dateRange('2025-10-31', '2025-11-02')).toEqual(['2025-10-31', '2025-11-01', '2025-11-02']);
-    expect(() => dateRange('2025-11-02', '2025-11-01')).toThrow('日付の範囲');
+    expect(() => dateRange('2025-11-02', '2025-11-01')).toThrow('Invalid date range');
   });
 
   it('前日から遡って n 日分', () => {
