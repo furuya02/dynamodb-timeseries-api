@@ -50,6 +50,11 @@ pnpm grafana-config      # デプロイの出力から作る
 
 「Save & test」で /datasets を呼び、成功すれば設定は完了です。
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/datasource-dark.png">
+  <img alt="データソースの設定（Authentication）" src="../images/datasource-light.png">
+</picture>
+
 - Service の既定は `monitoring` です。必ず `execute-api` か `lambda` に変えてください（変えないと署名が合わず 403 になります）
 - Base URL を設定すると、クエリの URL（`query`、`keys`）はその後ろにつながります。この場合、「Security」の Allowed hosts は不要です
 

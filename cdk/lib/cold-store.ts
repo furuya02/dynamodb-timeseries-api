@@ -43,7 +43,7 @@ export function createColdStore(scope: Construct, o: DeployOptions): ColdStore {
 
   const database = new glue.CfnDatabase(scope, 'ColdDatabase', {
     catalogId: stack.account,
-    databaseInput: { name: COLD_DATABASE, description: `${PROJECT} のコールドストア` },
+    databaseInput: { name: COLD_DATABASE, description: `Cold storage of ${PROJECT}` },
   });
   const location = `s3://${bucket.bucketName}/${COLD_DATA_PREFIX}`;
   const table = new glue.CfnTable(scope, 'ColdTable', {
@@ -78,7 +78,7 @@ export function createColdStore(scope: Construct, o: DeployOptions): ColdStore {
 
   const workgroup = new athena.CfnWorkGroup(scope, 'ColdWorkGroup', {
     name: PROJECT,
-    description: `${PROJECT} の API がコールドストアを読むためのワークグループ`,
+    description: `Workgroup used by the ${PROJECT} API to read the cold storage`,
     recursiveDeleteOption: true, // cdk destroy のときにクエリの履歴ごと消す
     workGroupConfiguration: {
       enforceWorkGroupConfiguration: true,

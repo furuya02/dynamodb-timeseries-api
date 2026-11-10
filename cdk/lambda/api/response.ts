@@ -71,7 +71,7 @@ export function measureResponse(body: QueryResponse, maxBytes = MAX_RESPONSE_BYT
   if (bytes > maxBytes) {
     throw new ApiError(
       400,
-      `応答が大きすぎます（${(bytes / 1e6).toFixed(1)}MB、上限 ${maxBytes / 1e6}MB）。interval で集計する、期間を短くする、fields で列を減らす、のいずれかを試してください`,
+      `The response is too large (${(bytes / 1e6).toFixed(1)} MB, limit ${maxBytes / 1e6} MB). Aggregate with interval, shorten the time range, or reduce the columns with fields`,
     );
   }
   return bytes;

@@ -97,13 +97,13 @@ pnpm check
 The script prints its messages in Japanese, as shown below.
 
 ```
-エンドポイント: https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com/v1/
-認証: IAM（SigV4、サービス execute-api、ap-northeast-1）
+Endpoint: https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com/v1/
+Auth: IAM (SigV4, service execute-api, ap-northeast-1)
 
 OK GET /datasets（161ms）: room_temp
 OK GET /keys?dataset=room_temp（114ms）: room-01, room-02, room-03
-OK GET /query 直近 1 時間・5 分平均（73ms）: 12 点、読んだ件数 60、消費 RCU 0.5
-OK GET /query 最新値（101ms）: 2026-11-04T20:59:00.000Z {"time":...,"key":"room-01","temperature":20.3,"humidity":59.2}
+OK GET /query last 1 hour, 5-minute average (73ms): 12 points, items read 60, consumed RCU 0.5
+OK GET /query latest value (101ms): 2026-11-04T20:59:00.000Z {"time":...,"key":"room-01","temperature":20.3,"humidity":59.2}
 ```
 
 `pnpm check` reads the endpoint and the authentication method from the CloudFormation outputs, and calls the API with SigV4 signing using your own credentials. If it shows NG, follow the cause it prints, or see [Operations and troubleshooting](06-operations.md).
@@ -142,18 +142,23 @@ docker compose -f grafana/docker-compose.yml -f grafana/docker-compose.linux.yml
 
 ### (3) Open the dashboard
 
-Open http://localhost:3000/ and select "Dashboards" → "dynamodb-timeseries-api" → "部屋の温度と湿度（dynamodb-timeseries-api サンプル）" (room temperature and humidity, sample).
+Open http://localhost:3000/ and select "Dashboards" → "dynamodb-timeseries-api" → "Room temperature and humidity (dynamodb-timeseries-api sample)".
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/dashboard-dark.png">
+  <img alt="Sample dashboard" src="../images/dashboard-light.png">
+</picture>
 
 - You can view it without logging in (anonymous access in Grafana 13 is viewer only)
 - To edit, log in as admin / admin from "Sign in" at the top right
-- Select rooms with "部屋" (room) at the top (multiple selection)
+- Select rooms with "Room" at the top (multiple selection)
 
 | Panel | Content |
 |---|---|
-| 温度 / 湿度（表示間隔ごとの平均） (temperature / humidity, average per display interval) | Trend aggregated by the API to match the display period |
-| 最新の温度 / 最新の湿度 (latest temperature / humidity) | Latest value per room (gauge / bar gauge) |
-| 日ごとの最高気温（JST） (daily max temperature, JST) | Daily max temperature split at 00:00 JST (bar chart) |
-| API の応答（meta） (API response, meta) | Items read, consumed RCU, truncation, cache |
+| Temperature / Humidity (average per interval) | Trend aggregated by the API to match the display period |
+| Latest temperature / Latest humidity | Latest value per room (gauge / bar gauge) |
+| Daily max temperature (JST) | Daily max temperature split at 00:00 JST (bar chart) |
+| API response (meta) | Items read, consumed RCU, truncation, cache |
 
 A sample alert rule (fires when the latest temperature stays above 29°C for 5 minutes) is also loaded into "Alerting" → "Alert rules".
 

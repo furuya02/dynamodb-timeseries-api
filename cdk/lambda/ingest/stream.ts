@@ -22,7 +22,7 @@ export const handler = async (event: DynamoDBStreamEvent): Promise<void> => {
     let pending = records.slice(i, i + BATCH);
     // 一部だけ失敗した分（FailedPutCount）は送り直す。送れなければ例外にして、Lambda にバッチごと再試行させる
     for (let attempt = 0; pending.length > 0; attempt++) {
-      if (attempt >= 3) throw new Error(`Firehose に ${pending.length} 件を送れませんでした`);
+      if (attempt >= 3) throw new Error(`Failed to send ${pending.length} records to Firehose`);
       const r = await firehose.send(
         new PutRecordBatchCommand({
           DeliveryStreamName: process.env.TSAPI_COLD_FIREHOSE,

@@ -150,7 +150,7 @@ export function createApi(deps: ApiDependencies): Api {
         return { status: 200, body: listDatasets(datasets) };
       }
       log({ type: 'unknown', status: 404, path });
-      return { status: 404, body: { error: 'パスは /query、/datasets、/keys のいずれかです' } };
+      return { status: 404, body: { error: 'The path must be /query, /datasets, or /keys' } };
     },
   };
 }

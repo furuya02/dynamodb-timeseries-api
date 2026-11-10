@@ -8,6 +8,11 @@ This chapter explains how to create panels by calling the API (`GET /query`) wit
 
 In the panel editor, select dynamodb-timeseries-api (Infinity) as the data source and set the following.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/query-editor-dark.png">
+  <img alt="Query settings (Type / Parser / Source / URL and URL Query Params)" src="../images/query-editor-light.png">
+</picture>
+
 | Item | Value | Note |
 |---|---|---|
 | Type | JSON | |
@@ -34,9 +39,14 @@ URL Query Params:
 
 `rows` in the response is in long format: "1 row = time × key". When Format is Time Series, Infinity converts it into one series per key, and key becomes a label. To show only the room name in the legend, set the panel's "Standard options" → "Display name" to `${__field.labels.key}`.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/parsing-options-dark.png">
+  <img alt="Parsing options & Result fields (Rows / Root and Columns)" src="../images/parsing-options-light.png">
+</picture>
+
 ## 4.2 Template variable (key drop-down)
 
-Create it in "Dashboard settings" → "Variables" → "New variable".
+Switch the dashboard to edit mode ("Edit") and add it with "+" under "Variables" in the right sidebar (Grafana 13; in earlier versions, "Dashboard settings" → "Variables" → "New variable").
 
 | Item | Value |
 |---|---|
@@ -50,6 +60,11 @@ Create it in "Dashboard settings" → "Variables" → "New variable".
 | Multi-value / Include All option | Enabled |
 
 In queries, write `${key:csv}`. With multiple selections, the keys are passed comma-separated, like `room-01,room-02`. If the key list is empty, the dataset needs `keys.values` or `keys.list` ([Defining datasets](02-datasets.md#24-allowed-keys-and-key-list)).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/variable-dark.png">
+  <img alt="Template variable settings" src="../images/variable-light.png">
+</picture>
 
 ## 4.3 Common queries
 
@@ -79,6 +94,11 @@ Returns the latest single item in the period for each key. It reads newest first
 
 Set Rows / Root to `meta` and Format to Table to show information about the same query.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/meta-dark.png">
+  <img alt="API information (meta) panel" src="../images/meta-light.png">
+</picture>
+
 | Column | Content |
 |---|---|
 | `points` | Number of points returned |
@@ -99,9 +119,14 @@ Alerts are evaluated in the Grafana backend. So they differ from dashboards in t
 | Template variables (`${key:csv}`) | Available | Not available |
 | Parser | Any | Backend group only (JSONata / JQ) |
 
-In alert queries, write the `key` values directly, and use `latest=1` or a fixed `interval` (`5m`, etc.). If a variable that was not replaced reaches the API, it returns 400 with "Grafana の変数が置き換えられていません" (Grafana variables were not replaced).
+In alert queries, write the `key` values directly, and use `latest=1` or a fixed `interval` (`5m`, etc.). If a variable that was not replaced reaches the API, it returns 400 with "a Grafana variable was not replaced".
 
 The sample alert rule (`grafana/provisioning/alerting/room-temp.yaml`) fires when the latest temperature stays above 29°C for 5 minutes.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/alert-rule-dark.png">
+  <img alt="Sample alert rule" src="../images/alert-rule-light.png">
+</picture>
 
 | Step | Setting |
 |---|---|

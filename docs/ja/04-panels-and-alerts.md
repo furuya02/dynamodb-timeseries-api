@@ -8,6 +8,11 @@ Infinity のクエリで、API（`GET /query`）を呼んでパネルを作る�
 
 パネルの編集画面で、データソースに dynamodb-timeseries-api（Infinity）を選び、次のように設定します。
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/query-editor-dark.png">
+  <img alt="クエリの設定（Type / Parser / Source / URL と URL Query Params）" src="../images/query-editor-light.png">
+</picture>
+
 | 項目 | 値 | 補足 |
 |---|---|---|
 | Type | JSON | |
@@ -34,9 +39,14 @@ URL Query Params:
 
 応答の `rows` は「1 行 = 時刻 × キー」の long 形式です。Format を Time Series にすると、Infinity が key ごとの系列に変換し、key がラベルになります。凡例を部屋の名前だけにするには、パネルの「Standard options」→「Display name」を `${__field.labels.key}` にします。
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/parsing-options-dark.png">
+  <img alt="Parsing options & Result fields（Rows / Root と Columns）" src="../images/parsing-options-light.png">
+</picture>
+
 ## 4.2 テンプレート変数（キーのプルダウン）
 
-「Dashboard settings」→「Variables」→「New variable」で作ります。
+ダッシュボードを編集モード（「Edit」）にし、右のサイドバーの「Variables」の「+」で作ります（Grafana 13。以前の版では「Dashboard settings」→「Variables」→「New variable」）。
 
 | 項目 | 値 |
 |---|---|
@@ -50,6 +60,11 @@ URL Query Params:
 | Multi-value / Include All option | 有効 |
 
 クエリでは `${key:csv}` と書きます。複数選択すると `room-01,room-02` のようにカンマ区切りで渡ります。キーの一覧が空になる場合は、データセットに `keys.values` か `keys.list` が必要です（[データセットの定義](02-datasets.md#24-キーの許可と一覧)）。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/variable-dark.png">
+  <img alt="テンプレート変数の設定" src="../images/variable-light.png">
+</picture>
 
 ## 4.3 よく使うクエリ
 
@@ -79,6 +94,11 @@ URL Query Params:
 
 Rows / Root を `meta`、Format を Table にすると、同じ問い合わせの情報を表示できます。
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/meta-dark.png">
+  <img alt="API の情報（meta）のパネル" src="../images/meta-light.png">
+</picture>
+
 | 列 | 内容 |
 |---|---|
 | `points` | 返した点の数 |
@@ -99,9 +119,14 @@ Rows / Root を `meta`、Format を Table にすると、同じ問い合わせ�
 | テンプレート変数（`${key:csv}`） | 使える | 使えない |
 | Parser | どれでも | Backend のグループ（JSONata / JQ）だけ |
 
-アラートのクエリでは、`key` に値を直接書き、`latest=1` か固定の `interval`（`5m` など）を使います。置き換わらない変数が届くと、API は「Grafana の変数が置き換えられていません」という 400 を返します。
+アラートのクエリでは、`key` に値を直接書き、`latest=1` か固定の `interval`（`5m` など）を使います。置き換わらない変数が届くと、API は「a Grafana variable was not replaced」という 400 を返します。
 
 サンプルのアラートルール（`grafana/provisioning/alerting/room-temp.yaml`）は、最新の温度が 29℃ を超えた状態が 5 分続いたら発火します。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/alert-rule-dark.png">
+  <img alt="サンプルのアラートルール" src="../images/alert-rule-light.png">
+</picture>
 
 | 手順 | 設定 |
 |---|---|

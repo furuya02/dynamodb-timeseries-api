@@ -6,6 +6,25 @@
 
 ## 5.1 オプション一覧
 
+どの組み合わせを選ぶかの目安です。
+
+```mermaid
+flowchart TD
+  Q1{"Grafana はどこで動く？"}
+  Q1 -->|"VPC の中<br/>（インターネットに出さない）"| P["exposure=restPrivate<br/>+ vpcEndpointId"]
+  Q1 -->|"それ以外"| Q2{"API キーや<br/>使用量プランが必要？"}
+  Q2 -->|はい| K["auth=apiKey<br/>（restPublic）"]
+  Q2 -->|いいえ| Q3{"API Gateway を<br/>使わない？"}
+  Q3 -->|はい| F["exposure=functionUrl"]
+  Q3 -->|いいえ| R["restPublic + iam<br/>（既定）"]
+  P --> W{"Grafana の AWS の<br/>認証情報は？"}
+  F --> W
+  R --> W
+  W -->|"アクセスキー"| U["-c grafanaUser=true"]
+  W -->|"ロールを引き受ける"| T["-c grafanaRoleTrust=ARN"]
+  W -->|"自分のロール（EC2 など）"| E["GrafanaPolicyArn を付ける"]
+```
+
 | 名前 | 既定値 | 値 |
 |---|---|---|
 | `config` | `config/datasets.yaml` | 設定ファイルのパス |
@@ -22,6 +41,8 @@
 `pnpm cdk-destroy` はスタックごと削除します。削除のときも、デプロイと同じ `-c` を付けておくのが確実です（手順書の例はそのように書いています）。
 
 ## 5.2 公開形態（exposure）
+
+![公開形態の比較](../images/exposure.png)
 
 | 値 | 入口 | 向いている環境 | 費用 |
 |---|---|---|---|
@@ -42,6 +63,8 @@ pnpm cdk-deploy -c exposure=restPrivate -c vpcEndpointId=vpce-0123456789abcdef0
 restPrivate は synth の結果で確かめていますが、実際の VPC からの呼び出しは確かめていません。
 
 ## 5.3 認証方式（auth）
+
+![認証方式の比較](../images/auth.png)
 
 | 値 | 仕組み | 使える公開形態 |
 |---|---|---|

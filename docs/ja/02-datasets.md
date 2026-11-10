@@ -41,7 +41,7 @@ DescribeTable でキーの名前を調べ、Scan で先頭の 100 件（`--sampl
 - 属性とその型
 
 ```
-# 確認: 見つかったキー: room-01。keys.pattern はその形から作った案です（すべてのキーを読んだわけではありません）
+# check: Keys found: room-01. keys.pattern is a proposal based on their shape (not all keys were read)
   dynamodb_timeseries_api_sample:
     description: dynamodb-timeseries-api-sample
     table: dynamodb-timeseries-api-sample
@@ -59,16 +59,16 @@ DescribeTable でキーの名前を調べ、Scan で先頭の 100 件（`--sampl
         type: number
 ```
 
-`# 確認:` の注記は必ず読んでください。主な注記は次のとおりです。
+`# check:` の注記は必ず読んでください。主な注記は次のとおりです（メッセージは英語です）。
 
 | 注記 | 対応 |
 |---|---|
-| 見つかったキー / keys.pattern はその形から作った案 | Scan の先頭は一部のパーティションに偏ります。キーの形が合っているか確かめます |
-| ソートキーに複数の種類があります | シングルテーブル設計で TEMP# と HUM# などが混在しています。多い方で推定したので、ほかの種類は `prefix` を変えた別のデータセットにします |
-| ソートキーの形式が違うアイテムが N 件 | 登録用アイテムなど、時系列でないアイテムを推定から除いています |
-| ソートキーにタイムゾーンの表記がありません | UTC 以外で保存しているなら `sortKey.timezone` を指定します |
-| パーティションキーが日付で分かれています | 日付の区切りが UTC 以外なら `partitionKey.timezone` を指定します |
-| 型が混在しています | `type` を確かめます |
+| Keys found ... keys.pattern is a proposal based on their shape | Scan の先頭は一部のパーティションに偏ります。キーの形が合っているか確かめます |
+| The sort key has multiple types | シングルテーブル設計で TEMP# と HUM# などが混在しています。多い方で推定したので、ほかの種類は `prefix` を変えた別のデータセットにします |
+| N items have a different sort key format | 登録用アイテムなど、時系列でないアイテムを推定から除いています |
+| The sort key has no time zone | UTC 以外で保存しているなら `sortKey.timezone` を指定します |
+| The partition key is split by date | 日付の区切りが UTC 以外なら `partitionKey.timezone` を指定します |
+| ... has mixed types | `type` を確かめます |
 
 ## 2.3 テーブル設計ごとの書き方
 
@@ -118,6 +118,16 @@ power:
 - 期間内の日付ごとに Query を実行し、結果をまとめて返します
 - `timezone` は「どのタイムゾーンの日付で分けたか」です。JST の日付で分けたテーブルを UTC として読むと、9 時間分を取りこぼします
 - 月で分けている場合は `bucket: monthly` と `{yyyy-MM}` を使います
+
+```mermaid
+flowchart LR
+  Q["key=device-1<br/>2025-11-03 10:00 → 11-05 08:00 (JST)"] --> P1["Query pk = device-1#2025-11-03"]
+  Q --> P2["Query pk = device-1#2025-11-04"]
+  Q --> P3["Query pk = device-1#2025-11-05"]
+  P1 --> M["まとめて時刻で絞り込み、<br/>並べ替える"]
+  P2 --> M
+  P3 --> M
+```
 
 ### (4) オフセットのない ISO 8601
 
@@ -234,9 +244,9 @@ datasets:
 設定ファイルに誤りがあると、`cdk synth` / `cdk deploy` の時点で、どのデータセットのどの項目が誤りかを一覧で表示して止まります。
 
 ```
-設定ファイルに誤りがあります: config/datasets.yaml
-  - datasets.room_temp.partitionKey.template: bucket: daily のときは {yyyy-MM-dd} を含めてください
-  - datasets.room_temp.keys: pattern か values のどちらかを指定してください（受け付けるキーを制限するため。list は一覧用で、制限には使いません）
+The configuration file has errors: config/datasets.yaml
+  - datasets.room_temp.partitionKey.template: Include {yyyy-MM-dd} when bucket is daily
+  - datasets.room_temp.keys: Specify pattern or values (to restrict the accepted keys; list is only for listing keys and does not restrict them)
 ```
 
 型の誤り（文字列のところに数値など）を直すと、項目の組み合わせに関する誤りが追加で表示されることがあります。
@@ -258,7 +268,7 @@ pnpm check --dataset <データセット名> --key <キー>
 | 0 件が返る | `template` / `prefix` / `timezone` の違いで、存在しないパーティション・範囲を読んでいる。`pnpm init-dataset` の結果と比べる |
 | 値が `null` | 属性名の誤り、または `type` に変換できない値（`number` に `"abc"` など） |
 | 500 `ResourceNotFoundException` | テーブル名・インデックス名の誤り、またはリージョンが違う |
-| 404 `データセット X は定義されていません` | 設定を変えたあと、デプロイし直していない（設定は Lambda に同梱されるため） |
+| 404 `Dataset X is not defined` | 設定を変えたあと、デプロイし直していない（設定は Lambda に同梱されるため） |
 
 ## 次に読む
 

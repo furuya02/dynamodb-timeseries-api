@@ -15,11 +15,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Scripts: `pnpm cold-backfill`, `pnpm seed --cold-days`
   - TTL attribute `expiresAt` on the sample table
 - Documentation: chapter 9, Cold storage (English and Japanese)
+- Documentation images: architecture diagrams (draw.io sources included), Grafana screenshots in light and dark themes, Mermaid flow charts, and a social preview image
+- `pnpm docs-screenshots` (Playwright) to retake the Grafana screenshots
+- Sample dashboard: `Cold bytes` column (`meta.cold.bytesScanned`) in the meta table
 
 ### Changed
 
 - Project and resource names are now `dynamodb-timeseries-api` (stack `DynamodbTimeseriesApiStack`)
 - Aggregation is computed from mergeable partial aggregates (results are unchanged)
+- The sample dashboard and alert rule are in English
+- All user-facing messages are in English: API errors, configuration and deploy option validation, CLI output (`pnpm seed`, `check`, `init-dataset`, `grafana-config`, `local-api`, `cold-backfill`), CloudFormation output descriptions, and the sample `datasets.yaml`
 
 ### Fixed
 

@@ -34,11 +34,11 @@ export class DynamodbTimeseriesApiStack extends cdk.Stack {
       const ingest = { datasets: props.datasets, store, logRetentionDays: o.logRetentionDays };
       if (o.coldIngest === 'scheduled') createScheduledIngest(this, ingest);
       else createStreamIngest(this, { ...ingest, sampleTable });
-      new cdk.CfnOutput(this, 'ColdBucketName', { value: store.bucket.bucketName, description: 'コールドストアの S3 バケット' });
+      new cdk.CfnOutput(this, 'ColdBucketName', { value: store.bucket.bucketName, description: 'S3 bucket of the cold storage' });
     }
     const endpoint = createEndpoint(this, fn, o);
-    new cdk.CfnOutput(this, 'Endpoint', { value: endpoint.url, description: 'Infinity の URL に設定するベース URL（末尾に query?... を付ける）' });
+    new cdk.CfnOutput(this, 'Endpoint', { value: endpoint.url, description: 'Base URL to set in Infinity (query?... is appended)' });
     if (o.auth === 'iam') createGrafanaAccess(this, endpoint.invokeStatements, o);
-    new cdk.CfnOutput(this, 'Region', { value: this.region, description: 'Infinity の AWS 認証に設定するリージョン' });
+    new cdk.CfnOutput(this, 'Region', { value: this.region, description: 'Region to set in the AWS authentication of Infinity' });
   }
 }

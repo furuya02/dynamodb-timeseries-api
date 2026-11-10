@@ -32,12 +32,12 @@ const timezone = z.string().refine(
       return false;
     }
   },
-  { message: 'UTC、+09:00 のようなオフセット、または Asia/Tokyo のような IANA 名を指定してください' },
+  { message: 'Use UTC, an offset such as +09:00, or an IANA name such as Asia/Tokyo' },
 );
 
 const limitsSchema = z
   .object({
-    maxRange: z.string().regex(DURATION, '90m / 12h / 31d の形式で指定してください').optional(), // 1 回で問い合わせられる期間
+    maxRange: z.string().regex(DURATION, 'Use the form 90m / 12h / 31d').optional(), // 1 回で問い合わせられる期間
     maxItems: z.number().int().positive().optional(), // 読む件数の上限
     maxPages: z.number().int().positive().optional(), // 読むページ数の上限
     maxRcu: z.number().positive().optional(), // 消費 RCU の上限
@@ -47,14 +47,14 @@ const limitsSchema = z
 
 const fieldSchema = z
   .object({
-    name: z.string().regex(ATTR, '属性名に使えない文字が含まれています'), // a.b でネスト属性
+    name: z.string().regex(ATTR, 'Contains characters that cannot be used in an attribute name'), // a.b でネスト属性
     alias: z.string().min(1).optional(), // 列名
     type: z.enum(fieldTypes).default('number'), // 値をこの型にそろえる
     unit: z.string().min(1).optional(), // 単位（応答の columns で返す）
     scale: z.number().optional(), // 掛け算での換算
   })
   .strict()
-  .refine((f) => f.scale === undefined || f.type === 'number', { message: 'scale は type: number のときだけ指定できます', path: ['scale'] });
+  .refine((f) => f.scale === undefined || f.type === 'number', { message: 'scale can be used only with type: number', path: ['scale'] });
 
 export const coldTypes = ['athena'] as const;
 
@@ -62,15 +62,15 @@ export const coldTypes = ['athena'] as const;
 const coldSchema = z
   .object({
     type: z.enum(coldTypes).default('athena'), // 読み先の種類（今は Athena のみ）
-    hotRetention: z.string().regex(DURATION, '90m / 12h / 7d の形式で指定してください').default('7d'), // これより前はコールドストアから読む
-    maxRange: z.string().regex(DURATION, '90m / 12h / 400d の形式で指定してください').default('400d'), // 1 回で問い合わせられる期間（limits.maxRange の代わりに使う）
+    hotRetention: z.string().regex(DURATION, 'Use the form 90m / 12h / 7d').default('7d'), // これより前はコールドストアから読む
+    maxRange: z.string().regex(DURATION, 'Use the form 90m / 12h / 400d').default('400d'), // 1 回で問い合わせられる期間（limits.maxRange の代わりに使う）
   })
   .strict();
 
 const datasetSchema = z
   .object({
     description: z.string().optional(),
-    table: z.string().regex(/^[A-Za-z0-9_.-]{3,255}$/, 'DynamoDB のテーブル名として不正です'),
+    table: z.string().regex(/^[A-Za-z0-9_.-]{3,255}$/, 'Not a valid DynamoDB table name'),
     index: z
       .string()
       .regex(/^[A-Za-z0-9_.-]{3,255}$/)
@@ -100,7 +100,7 @@ const datasetSchema = z
         list: z
           .object({
             partitionValue: z.string().min(1),
-            attribute: z.string().regex(ATTR, '属性名に使えない文字が含まれています'),
+            attribute: z.string().regex(ATTR, 'Contains characters that cannot be used in an attribute name'),
           })
           .strict()
           .optional(),
@@ -115,46 +115,50 @@ const datasetSchema = z
   .superRefine((d, ctx) => {
     const pk = d.partitionKey;
     if (!pk.template.includes('{key}')) {
-      ctx.addIssue({ code: 'custom', path: ['partitionKey', 'template'], message: '{key} を含めてください' });
+      ctx.addIssue({ code: 'custom', path: ['partitionKey', 'template'], message: 'Include {key}' });
     }
     const token = bucketToken[pk.bucket];
     if (token && !pk.template.includes(token)) {
-      ctx.addIssue({ code: 'custom', path: ['partitionKey', 'template'], message: `bucket: ${pk.bucket} のときは ${token} を含めてください` });
+      ctx.addIssue({ code: 'custom', path: ['partitionKey', 'template'], message: `Include ${token} when bucket is ${pk.bucket}` });
     }
     if (!token && /\{yyyy/.test(pk.template)) {
       ctx.addIssue({
         code: 'custom',
         path: ['partitionKey', 'bucket'],
-        message: 'template に日付が含まれています。bucket: daily または monthly を指定してください',
+        message: 'The template contains a date. Set bucket: daily or monthly',
       });
     }
     if (pk.bucket === 'none' && pk.timezone !== 'UTC') {
-      ctx.addIssue({ code: 'custom', path: ['partitionKey', 'timezone'], message: 'timezone は bucket: daily / monthly のときだけ指定できます' });
+      ctx.addIssue({ code: 'custom', path: ['partitionKey', 'timezone'], message: 'timezone can be used only with bucket: daily / monthly' });
     }
     if (d.keys.pattern === undefined && d.keys.values === undefined) {
       ctx.addIssue({
         code: 'custom',
         path: ['keys'],
-        message: 'pattern か values のどちらかを指定してください（受け付けるキーを制限するため。list は一覧用で、制限には使いません）',
+        message: 'Specify pattern or values (to restrict the accepted keys; list is only for listing keys and does not restrict them)',
       });
     }
     if (d.keys.pattern !== undefined) {
       try {
         new RegExp(d.keys.pattern);
       } catch {
-        ctx.addIssue({ code: 'custom', path: ['keys', 'pattern'], message: '正規表現として不正です' });
+        ctx.addIssue({ code: 'custom', path: ['keys', 'pattern'], message: 'Not a valid regular expression' });
       }
     }
     if (d.sortKey.format !== 'iso8601' && d.sortKey.timezone !== 'UTC') {
-      ctx.addIssue({ code: 'custom', path: ['sortKey', 'timezone'], message: 'timezone は format: iso8601 のときだけ指定できます（epoch は UTC 固定）' });
+      ctx.addIssue({ code: 'custom', path: ['sortKey', 'timezone'], message: 'timezone can be used only with format: iso8601 (epoch is always UTC)' });
     }
     const names = new Set<string>();
     d.fields.forEach((f, i) => {
       const label = f.alias ?? f.name.replaceAll('.', '_'); // 応答の列名（lambda/api/transform.ts の columnName と同じ）
-      if (names.has(label)) ctx.addIssue({ code: 'custom', path: ['fields', i], message: `列名 ${label} が重複しています` });
+      if (names.has(label)) ctx.addIssue({ code: 'custom', path: ['fields', i], message: `Duplicate column name ${label}` });
       names.add(label);
       if (f.name === d.sortKey.name)
-        ctx.addIssue({ code: 'custom', path: ['fields', i, 'name'], message: 'ソートキーは時刻列として自動で返すため、fields に書かないでください' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['fields', i, 'name'],
+          message: 'Do not list the sort key in fields (it is returned automatically as the time column)',
+        });
     });
   });
 
@@ -173,10 +177,14 @@ export const configSchema = z
   .strict()
   .superRefine((c, ctx) => {
     // キー名の誤りで他の項目の検証が止まらないよう、名前はここでまとめて確認する
-    if (Object.keys(c.datasets).length === 0) ctx.addIssue({ code: 'custom', path: ['datasets'], message: 'datasets を 1 つ以上定義してください' });
+    if (Object.keys(c.datasets).length === 0) ctx.addIssue({ code: 'custom', path: ['datasets'], message: 'Define at least one dataset' });
     for (const name of Object.keys(c.datasets)) {
       if (!NAME.test(name))
-        ctx.addIssue({ code: 'custom', path: ['datasets', name], message: 'データセット名は英小文字で始まり、英小文字・数字・_ のみ使えます（64 文字以内）' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['datasets', name],
+          message: 'Dataset names must start with a lowercase letter and contain only lowercase letters, digits, and _ (up to 64 characters)',
+        });
     }
   });
 
@@ -205,24 +213,24 @@ export function resolve(config: Config): Record<string, ResolvedDataset> {
 export class ConfigError extends Error {}
 
 export function loadConfig(file: string): Record<string, ResolvedDataset> {
-  if (!fs.existsSync(file)) throw new ConfigError(`設定ファイルが見つかりません: ${file}`);
+  if (!fs.existsSync(file)) throw new ConfigError(`Configuration file not found: ${file}`);
   let raw: unknown;
   try {
     raw = parse(fs.readFileSync(file, 'utf8'));
   } catch (e) {
-    throw new ConfigError(`YAML として読み込めません: ${file}\n  ${(e as Error).message}`);
+    throw new ConfigError(`Cannot parse as YAML: ${file}\n  ${(e as Error).message}`);
   }
   const r = configSchema.safeParse(raw);
   const lines = r.success ? [] : r.error.issues.map((i) => `  - ${i.path.join('.') || '(root)'}: ${i.message}`);
   // データセット名は、他の項目に誤りがあっても必ず確認する
   const names = Object.keys((raw as { datasets?: object } | null)?.datasets ?? {});
   for (const name of names) {
-    const line = `  - datasets.${name}: データセット名は英小文字で始まり、英小文字・数字・_ のみ使えます（64 文字以内）`;
+    const line = `  - datasets.${name}: Dataset names must start with a lowercase letter and contain only lowercase letters, digits, and _ (up to 64 characters)`;
     if (!NAME.test(name) && !lines.includes(line)) lines.unshift(line);
   }
   if (r.success && lines.length === 0) return resolve(r.data);
   // zod は型の誤りがあると superRefine（項目の組み合わせの確認）を実行しないため、その旨を添える
   const typeErrors = !r.success && r.error.issues.some((i) => i.code !== 'custom');
-  const note = typeErrors ? '\n（型の誤りを直すと、項目の組み合わせに関する誤りが追加で表示されることがあります）' : '';
-  throw new ConfigError(`設定ファイルに誤りがあります: ${file}\n${lines.join('\n')}${note}`);
+  const note = typeErrors ? '\n(After fixing type errors, more errors about combinations of settings may be shown)' : '';
+  throw new ConfigError(`The configuration file has errors: ${file}\n${lines.join('\n')}${note}`);
 }

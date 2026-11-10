@@ -95,13 +95,13 @@ pnpm check
 ```
 
 ```
-エンドポイント: https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com/v1/
-認証: IAM（SigV4、サービス execute-api、ap-northeast-1）
+Endpoint: https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com/v1/
+Auth: IAM (SigV4, service execute-api, ap-northeast-1)
 
 OK GET /datasets（161ms）: room_temp
 OK GET /keys?dataset=room_temp（114ms）: room-01, room-02, room-03
-OK GET /query 直近 1 時間・5 分平均（73ms）: 12 点、読んだ件数 60、消費 RCU 0.5
-OK GET /query 最新値（101ms）: 2026-11-04T20:59:00.000Z {"time":...,"key":"room-01","temperature":20.3,"humidity":59.2}
+OK GET /query last 1 hour, 5-minute average (73ms): 12 points, items read 60, consumed RCU 0.5
+OK GET /query latest value (101ms): 2026-11-04T20:59:00.000Z {"time":...,"key":"room-01","temperature":20.3,"humidity":59.2}
 ```
 
 `pnpm check` は CloudFormation の出力からエンドポイントと認証方式を読み、自分の認証情報で SigV4 署名して呼びます。NG と表示された場合は、表示される原因の案内か、[運用とトラブルシューティング](06-operations.md) を参照してください。
@@ -140,18 +140,23 @@ docker compose -f grafana/docker-compose.yml -f grafana/docker-compose.linux.yml
 
 ### (3) ダッシュボードを開く
 
-http://localhost:3000/ を開き、「Dashboards」→「dynamodb-timeseries-api」→「部屋の温度と湿度（dynamodb-timeseries-api サンプル）」を選びます。
+http://localhost:3000/ を開き、「Dashboards」→「dynamodb-timeseries-api」→「Room temperature and humidity (dynamodb-timeseries-api sample)」を選びます。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/dashboard-dark.png">
+  <img alt="サンプルダッシュボード" src="../images/dashboard-light.png">
+</picture>
 
 - ログインなしで閲覧できます（Grafana 13 の匿名アクセスは閲覧者のみ）
 - 編集するときは右上の「Sign in」から admin / admin でログインします
-- 部屋は上部の「部屋」で選べます（複数選択）
+- 部屋は上部の「Room」で選べます（複数選択）
 
 | パネル | 内容 |
 |---|---|
-| 温度 / 湿度（表示間隔ごとの平均） | 表示期間に合わせて API 側で集計した推移 |
-| 最新の温度 / 最新の湿度 | 部屋ごとの最新値（ゲージ / バーゲージ） |
-| 日ごとの最高気温（JST） | JST の 0 時で区切った 1 日ごとの最高気温（棒グラフ） |
-| API の応答（meta） | 読んだ件数、消費 RCU、打ち切り、キャッシュ |
+| Temperature / Humidity (average per interval) | 表示期間に合わせて API 側で集計した推移 |
+| Latest temperature / Latest humidity | 部屋ごとの最新値（ゲージ / バーゲージ） |
+| Daily max temperature (JST) | JST の 0 時で区切った 1 日ごとの最高気温（棒グラフ） |
+| API response (meta) | 読んだ件数、消費 RCU、打ち切り、キャッシュ |
 
 サンプルのアラートルール（最新の温度が 29℃ を超えた状態が 5 分続いたら）も、「Alerting」→「Alert rules」に読み込まれます。
 

@@ -27,7 +27,7 @@ describe('inferDataset', () => {
         { name: 'humidity', type: 'number' },
       ],
     });
-    expect(r.notes).toContain('見つかったキー: room-01。keys.pattern はその形から作った案です（すべてのキーを読んだわけではありません）');
+    expect(r.notes).toContain('Keys found: room-01. keys.pattern is a proposal based on their shape (not all keys were read)');
     expect(validate(r).success).toBe(true);
   });
 
@@ -44,8 +44,8 @@ describe('inferDataset', () => {
       keys: { pattern: '^[a-z]+$' },
       fields: [{ name: 'humidity', type: 'number' }],
     });
-    expect(r.notes.join('\n')).toContain('ソートキーに複数の種類があります（HUM# 6 件、TEMP# 4 件）');
-    expect(r.notes.join('\n')).toContain('ソートキーの形式が違うアイテムが 5 件ありました');
+    expect(r.notes.join('\n')).toContain('The sort key has multiple types (HUM#: 6, TEMP#: 4)');
+    expect(r.notes.join('\n')).toContain('5 items have a different sort key format');
     expect(validate(r).success).toBe(true);
   });
 
@@ -64,7 +64,7 @@ describe('inferDataset', () => {
   it('タイムゾーンのない ISO 8601 → sortKey.timezone の注記', () => {
     const r = inferDataset(input({ items: [{ pk: S('d1'), sk: S('2025-11-03T09:00:00'), v: N(1) }] }));
     expect(r.dataset).toMatchObject({ sortKey: { format: 'iso8601' } });
-    expect(r.notes.join('\n')).toContain('タイムゾーンの表記がありません');
+    expect(r.notes.join('\n')).toContain('The sort key has no time zone');
   });
 
   it('プレフィックス + epoch（TEMP#1730000000）', () => {
@@ -98,13 +98,13 @@ describe('inferDataset', () => {
       { name: 'flag', type: 'boolean' },
       { name: 'nothing', type: 'string' },
     ]);
-    expect(r.notes.join('\n')).toContain('meta.fw のように書けます');
-    expect(r.notes.join('\n')).toContain('mixed は型が混在しています（number / string）');
+    expect(r.notes.join('\n')).toContain('write meta.fw');
+    expect(r.notes.join('\n')).toContain('mixed has mixed types (number / string)');
   });
 
   it('時刻形式を推定できなければ注記し、属性がなければ仮の列を置く', () => {
     const r = inferDataset(input({ items: [{ pk: S('a'), sk: S('hello') }] }));
-    expect(r.notes.join('\n')).toContain('ソートキーの時刻形式を推定できませんでした（例: hello）');
+    expect(r.notes.join('\n')).toContain('Could not infer the time format of the sort key (e.g. hello)');
     expect(r.dataset.fields).toEqual([{ name: 'value', type: 'number' }]);
   });
 
@@ -122,7 +122,7 @@ describe('inferPartitionKey', () => {
   it('形がそろわなければ template を推定せずに注記する', () => {
     const notes: string[] = [];
     expect(inferPartitionKey('pk', ['a#b', 'c'], notes)).toEqual({ partitionKey: { name: 'pk' }, keys: ['a#b', 'c'] });
-    expect(notes[0]).toContain('template を推定できませんでした');
+    expect(notes[0]).toContain('Could not infer template');
   });
 
   it('月で分けたキー', () => {

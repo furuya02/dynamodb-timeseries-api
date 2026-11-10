@@ -84,7 +84,7 @@ function addApiKey(scope: Construct, api: apigw.RestApi, o: DeployOptions): void
 
 /** restPrivate の VPC エンドポイント ID（readOptions で必須にしているが、直接呼ばれた場合に備えて確かめる） */
 function requireVpcEndpointId(o: DeployOptions): string {
-  if (!o.vpcEndpointId) throw new Error('exposure=restPrivate には vpcEndpointId が必要です');
+  if (!o.vpcEndpointId) throw new Error('exposure=restPrivate requires vpcEndpointId');
   return o.vpcEndpointId;
 }
 

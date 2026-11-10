@@ -29,26 +29,26 @@ const { values: args } = parseArgs({
 
 const datasets = loadConfig(path.resolve(args.config));
 const names = args.dataset ?? Object.keys(datasets).filter((n) => datasets[n].cold);
-for (const n of names) if (!datasets[n]?.cold) throw new Error(`データセット ${n} がないか、cold が書かれていません`);
-if (names.length === 0) throw new Error('cold を書いたデータセットがありません（config/datasets.yaml）');
+for (const n of names) if (!datasets[n]?.cold) throw new Error(`Dataset ${n} does not exist or has no cold`);
+if (names.length === 0) throw new Error('No dataset has cold (config/datasets.yaml)');
 
 let dates: string[];
 if (args.from || args.to) dates = dateRange(args.from ?? args.to ?? '', args.to ?? args.from ?? '');
 else dates = lastDays(Date.now(), Number(args.days ?? '7'));
 
 const bucket = args.bucket ?? (await getStackOutputs(args.stack, args.region)).ColdBucketName;
-if (!bucket) throw new Error(`スタック ${args.stack} の出力に ColdBucketName がありません。-c cold=true でデプロイしてください`);
+if (!bucket) throw new Error(`The outputs of stack ${args.stack} have no ColdBucketName. Deploy with -c cold=true`);
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({ region: args.region }));
 const s3 = new S3Client({ region: args.region });
-console.log(`s3://${bucket}/ に ${names.join(', ')} の ${dates[0]} 〜 ${dates.at(-1)}（${dates.length} 日、UTC）を取り込みます`);
+console.log(`Ingesting ${names.join(', ')} from ${dates[0]} to ${dates.at(-1)} (${dates.length} days, UTC) into s3://${bucket}/`);
 for (const name of names) {
   const keys = await ingestKeys(client, datasets[name]);
   for (const date of dates) {
     const r = await ingestDay(client, { s3, bucket }, name, datasets[name], date, keys);
     console.log(
-      `  ${name} ${date}: キー ${r.keys}、読んだ件数 ${r.items}、1 分の集計 ${r.records} 行、${(r.bytes / 1024).toFixed(1)}KB、消費 RCU ${r.consumedRcu}`,
+      `  ${name} ${date}: keys ${r.keys}, items read ${r.items}, 1-minute rollup rows ${r.records}, ${(r.bytes / 1024).toFixed(1)}KB, consumed RCU ${r.consumedRcu}`,
     );
   }
 }
-console.log('完了しました');
+console.log('Done');

@@ -8,13 +8,14 @@ English | [日本語](README.ja.md)
 An API for reading time-series data in Amazon DynamoDB from Grafana (with the Infinity data source).
 You describe "which table, which keys, and which attributes to return" in a single configuration file (`config/datasets.yaml`) and deploy it with the AWS CDK.
 
-```
-Grafana (Infinity) ──SigV4 / API key──▶ API Gateway (REST) or Lambda function URL
-                                              │
-                                              ▼
-                                   Lambda (Node.js 24, arm64) ──Query──▶ DynamoDB
-                                   bundles the contents of config/datasets.yaml
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
+  <img alt="Sample dashboard" src="docs/images/dashboard-light.png">
+</picture>
+
+![Architecture](docs/images/architecture.png)
+
+Architecture: Grafana calls the API with SigV4 (or an API key); the Lambda function reads only the configured tables with Query. Optional cold storage: [docs/en/09-cold-storage.md](docs/en/09-cold-storage.md).
 
 ## Features
 

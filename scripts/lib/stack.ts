@@ -11,7 +11,7 @@ export type StackOutputs = Record<string, string | undefined>;
 export async function getStackOutputs(stackName: string, region: string): Promise<StackOutputs> {
   const stack = (await new CloudFormationClient({ region }).send(new DescribeStacksCommand({ StackName: stackName }))).Stacks?.[0];
   const outputs = Object.fromEntries((stack?.Outputs ?? []).map((o) => [o.OutputKey ?? '', o.OutputValue]));
-  if (!outputs.Endpoint) throw new Error(`スタック ${stackName} の出力に Endpoint がありません（リージョン ${region}）`);
+  if (!outputs.Endpoint) throw new Error(`The outputs of stack ${stackName} have no Endpoint (region ${region})`);
   return outputs;
 }
 

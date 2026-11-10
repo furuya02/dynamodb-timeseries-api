@@ -111,6 +111,6 @@ describe('ingestDay', () => {
   it('キーを列挙できなければエラー（Scan はしない）', async () => {
     const { client } = fakeClient(() => ({}));
     const { s3 } = fakeS3();
-    await expect(ingestDay(client, { s3, bucket: 'b' }, 'ds', base({ keys: { pattern: '.*' } }), DAY)).rejects.toThrow('keys.values か keys.list');
+    await expect(ingestDay(client, { s3, bucket: 'b' }, 'ds', base({ keys: { pattern: '.*' } }), DAY)).rejects.toThrow('keys.values or keys.list');
   });
 });

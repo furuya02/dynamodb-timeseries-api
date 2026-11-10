@@ -41,7 +41,7 @@ export interface ColdSql {
 const IDENT = /^[a-z0-9_]{1,255}$/;
 
 const ident = (s: string): string => {
-  if (!IDENT.test(s)) throw new Error(`Athena の名前として使えません: ${s}`);
+  if (!IDENT.test(s)) throw new Error(`Not a valid Athena name: ${s}`);
   return `"${s}"`;
 };
 

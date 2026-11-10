@@ -22,7 +22,7 @@ export function selectColumns(d: ResolvedDataset, param: string | undefined): Co
   if (wanted.length === 0) return all;
   return wanted.map((w) => {
     const c = all.find((x) => x.column === w || x.field.name === w);
-    if (!c) throw new ApiError(400, `fields の ${w} はデータセットに定義されていません。使える列: ${all.map((x) => x.column).join(', ')}`);
+    if (!c) throw new ApiError(400, `${w} in fields is not defined in the dataset. Available columns: ${all.map((x) => x.column).join(', ')}`);
     return c;
   });
 }

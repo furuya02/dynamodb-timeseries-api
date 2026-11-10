@@ -4,11 +4,7 @@
 
 直近のデータ（ホット）は DynamoDB から、それより前のデータ（コールド）は S3 + Athena から読み、**1 つのクエリで 1 本の系列として返す**機能です。Grafana 側は、これまでと同じ Infinity の 1 クエリのままです。
 
-```
-                         ┌─ 現在 − hotRetention より後 ─→ DynamoDB（秒〜分単位の生データ）
-GET /query（90 日など）──┤                                                        ├─→ 同じ区切りを足し合わせて 1 本の系列
-                         └─ それより前 ────────────────→ Athena（S3 の Parquet、1 分の集計）
-```
+![ホット + コールドの構成](../images/hot-cold.png)
 
 - DynamoDB には直近（既定 7 日）だけを残し（TTL）、保存の費用と読み込みの量を抑えます
 - コールドには 1 分ごとの件数・合計・最小・最大・最後の値を保存します。区切りをまたいで足し合わせられる形なので、境界をまたぐ区切りでも平均・件数が正しく出ます
@@ -111,10 +107,10 @@ pnpm cold-backfill --from 2026-11-01 --to 2026-11-05 --dataset room_temp
 ```
 
 ```
-s3://dynamodb-timeseries-api-cold-123456789012/ に room_temp の 2026-11-07 〜 2026-11-08（2 日、UTC）を取り込みます
-  room_temp 2026-11-07: キー 3、読んだ件数 4152、1 分の集計 8304 行、83.1KB、消費 RCU 32.5
-  room_temp 2026-11-08: キー 3、読んだ件数 4250、1 分の集計 8500 行、84.7KB、消費 RCU 33
-完了しました
+Ingesting room_temp from 2026-11-07 to 2026-11-08 (2 days, UTC) into s3://dynamodb-timeseries-api-cold-123456789012/
+  room_temp 2026-11-07: keys 3, items read 4152, 1-minute rollup rows 8304, 83.1KB, consumed RCU 32.5
+  room_temp 2026-11-08: keys 3, items read 4250, 1-minute rollup rows 8500, 84.7KB, consumed RCU 33
+Done
 ```
 
 日付のフォルダの中身を置き換えるので、ストリームで書かれた小さなファイルを 1 日 1 ファイルにまとめ直すのにも使えます（その日のデータが DynamoDB に残っている間）。
@@ -135,6 +131,15 @@ pnpm seed --cold-days 30
 DynamoDB に 7 日分を入れたあと、その前の 30 日分を 1 分の集計にして S3 に直接書きます。DynamoDB を経由しないので、37 日分のデータを数十秒で用意できます。
 
 ## 9.4 問い合わせ
+
+```mermaid
+flowchart LR
+  C["from 〜 境界<br/>Athena: 1 分の集計"] --> M["同じ区切りを足し合わせる<br/>（件数・合計・最小・最大・最後の値）"]
+  H["境界 〜 to<br/>DynamoDB: 生データ"] --> M
+  M --> R["1 本の系列<br/>（1 つの応答）"]
+  B(("境界 =<br/>現在 − hotRetention")) -.- C
+  B -.- H
+```
 
 パラメータはこれまでと同じです。
 
@@ -159,6 +164,20 @@ DynamoDB に 7 日分を入れたあと、その前の 30 日分を 1 分の集�
 | `truncated` | 行数が `limits.maxItems` を超えて打ち切ったか（`meta.truncatedBy` は `maxItems`） |
 
 ### 実測（ap-northeast-1、2026/11）
+
+37 日分を 1 つのパネルで表示した例です（直近 7 日が DynamoDB、それより前が S3 + Athena）。線は境界でつながっています。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/cold-37-days-dark.png">
+  <img alt="37 日分の温度（ホット + コールド）" src="../images/cold-37-days-light.png">
+</picture>
+
+meta に `cold.bytesScanned` の列（Cold bytes）を加えると、Athena が読んだ量を確認できます（サンプルダッシュボードの「API response (meta)」）。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/cold-meta-dark.png">
+  <img alt="Athena が読んだ量（Cold bytes）" src="../images/cold-meta-light.png">
+</picture>
 
 サンプル（3 部屋、DynamoDB 7 日分 + コールド 30 日分）で測りました。
 

@@ -14,7 +14,7 @@ const utcDate = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 export function dateRange(from: string, to: string): string[] {
   const start = Date.parse(`${from}T00:00:00Z`);
   const end = Date.parse(`${to}T00:00:00Z`);
-  if (Number.isNaN(start) || Number.isNaN(end) || start > end) throw new Error(`日付の範囲が不正です: ${from} 〜 ${to}（yyyy-MM-dd）`);
+  if (Number.isNaN(start) || Number.isNaN(end) || start > end) throw new Error(`Invalid date range: ${from} to ${to} (yyyy-MM-dd)`);
   const out: string[] = [];
   for (let t = start; t <= end; t += DAY) out.push(utcDate(t));
   return out;

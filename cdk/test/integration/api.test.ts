@@ -46,7 +46,7 @@ describe('エラーと構造化ログ', () => {
     const { api } = newApi();
     const e400 = await api.handle('/query', { dataset: 'agg' });
     expect(e400.status).toBe(400);
-    expect(JSON.stringify(e400.body)).toContain('key を指定');
+    expect(JSON.stringify(e400.body)).toContain('Specify key');
     const e500 = await api.handle('/query', { dataset: 'wrong_type', key: 'room-01', from: `${T0}`, to: `${T0 + H}` });
     expect(e500.status).toBe(500);
     expect(JSON.stringify(e500.body)).toContain('ValidationException');
@@ -71,7 +71,7 @@ describe('エラーと構造化ログ', () => {
     const p = { dataset: 'paging_huge', key: 'huge', from: `${T0}`, to: `${T0 + 6_000_000}` };
     const huge = await api.handle('/query', p);
     expect(huge.status).toBe(400);
-    expect(JSON.stringify(huge.body)).toContain('応答が大きすぎます');
+    expect(JSON.stringify(huge.body)).toContain('The response is too large');
     expect((await api.handle('/query', { ...p, interval: '10m', agg: 'count' })).status).toBe(200);
   });
 });

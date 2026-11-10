@@ -8,6 +8,29 @@ The base URL is the deployment output `Endpoint` (`https://<id>.execute-api.<reg
 
 Returns time series.
 
+```mermaid
+sequenceDiagram
+  participant G as Grafana (Infinity)
+  participant A as API Gateway / function URL
+  participant L as Lambda
+  participant D as DynamoDB
+  participant S as Athena (cold storage, optional)
+  G->>A: GET /query?dataset&key&from&to&interval&agg
+  A->>L: invoke (IAM or API key checked)
+  L->>L: validate the parameters against datasets.yaml
+  alt same request within cacheTtlSeconds
+    L-->>G: cached response (meta.cache = hit)
+  else
+    par range after now − hotRetention
+      L->>D: Query per key (and per date), stop at the limits
+    and range before it (only with cold)
+      L->>S: SQL with dataset / date partition filters
+    end
+    L->>L: merge partial aggregates, shape as long / wide
+    L-->>G: rows + columns + meta
+  end
+```
+
 ### (1) Parameters
 
 | Parameter | Required | Description |
@@ -74,7 +97,7 @@ Returns the list of datasets. Table names and attribute names are not returned.
 [
   {
     "name": "room_temp",
-    "description": "部屋ごとの温度と湿度（サンプル）",
+    "description": "Temperature and humidity per room (sample)",
     "columns": [{ "name": "temperature", "type": "number", "unit": "celsius" }],
     "maxRange": "31d",
     "maxKeys": 20
@@ -109,21 +132,21 @@ Main 400 messages:
 
 | Message | Cause |
 |---|---|
-| `dataset を指定してください` (specify dataset) | `dataset` is missing |
-| `key を指定してください（複数の場合はカンマ区切り）` (specify key; comma-separated for multiple keys) | `key` is missing |
-| `key X は許可されていません（keys.pattern / keys.values）` (key X is not allowed) | Key not allowed |
-| `key は N 個まで指定できます（limits.maxKeys）` (up to N keys can be specified) | Too many keys |
-| `from を UNIX 時刻（ミリ秒）で指定してください` (specify from as UNIX time in milliseconds) | `from` / `to` is not a number |
-| `from は to 以前の時刻を指定してください` (from must be at or before to) | `from > to` |
-| `期間が長すぎます。31d 以内にしてください（limits.maxRange）` (period too long; keep it within 31d) | The period exceeds `maxRange` |
-| `fields の X はデータセットに定義されていません` (X in fields is not defined in the dataset) | Column not in the definition |
-| `interval はミリ秒（...）か、30s / 5m / 1h / 1d の形式で指定してください` (specify interval in milliseconds or as 30s / 5m / 1h / 1d) | `interval` format |
-| `agg は ... のいずれかを指定してください` (agg must be one of ...) / `agg は interval と一緒に指定してください` (specify agg together with interval) | Invalid `agg` |
-| `latest と interval は同時に指定できません` (latest and interval cannot be specified together) | Invalid combination |
-| `format は long / wide のいずれかを指定してください` (format must be long or wide) | Invalid `format` |
-| `tz は UTC、...` (tz must be UTC, ...) | Invalid time zone |
-| `X=...: Grafana の変数が置き換えられていません` (Grafana variables were not replaced) | A template variable or `$__interval_ms` arrived as is (alerts, etc.) |
-| `応答が大きすぎます（...）` (response too large) | The response exceeds 5.5MB |
+| `Specify dataset` | `dataset` is missing |
+| `Specify key (comma-separated for multiple keys)` | `key` is missing |
+| `Key X is not allowed (keys.pattern / keys.values)` | Key not allowed |
+| `Up to N keys can be specified (limits.maxKeys)` | Too many keys |
+| `Specify from as UNIX time in milliseconds. ...` | `from` / `to` is not a number |
+| `from must be earlier than or equal to to` | `from > to` |
+| `The time range is too long. Keep it within 31d (limits.maxRange)` | The period exceeds `maxRange` |
+| `X in fields is not defined in the dataset. ...` | Column not in the definition |
+| `interval must be milliseconds (...) or 30s / 5m / 1h / 1d` | `interval` format |
+| `agg must be one of ...` / `agg requires interval` | Invalid `agg` |
+| `latest and interval cannot be used together` | Invalid combination |
+| `format must be one of long / wide` | Invalid `format` |
+| `tz must be UTC, ...` | Invalid time zone |
+| `X=...: a Grafana variable was not replaced. ...` | A template variable or `$__interval_ms` arrived as is (alerts, etc.) |
+| `The response is too large (...)` | The response exceeds 5.5MB |
 
 ## 7.5 Authentication
 

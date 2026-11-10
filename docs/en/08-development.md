@@ -148,3 +148,26 @@ pnpm cdk-destroy -c sample=true -c grafanaUser=true
 ```
 
 IAM changes can take a few minutes to take effect. If you switch the permissions of the same principal while testing, the results are inconsistent, so when you compare permission combinations, use a separate IAM user for each combination.
+
+## 8.10 Images in the documentation
+
+Images are in `docs/images/`.
+
+| Kind | Files | How to update |
+|---|---|---|
+| Architecture diagrams | `architecture` / `exposure` / `auth` / `hot-cold` (`.drawio` and `.png`) | Edit the `.drawio` file in draw.io and export it as PNG (`drawio -x -f png -s 2 -b 16 -o <name>.png <name>.drawio`) |
+| Grafana screenshots | `<name>-light.png` / `<name>-dark.png` | `pnpm docs-screenshots` (below) |
+| Flow charts | Mermaid in the documentation | Edit the Markdown directly (GitHub renders it) |
+| Social preview | `social-preview.png` (1280×640) | Upload it in the repository's Settings → Social preview on GitHub |
+
+Grafana screenshots are taken in both light and dark themes, and `<picture>` shows the one that matches the reader's theme.
+
+```bash
+pnpm --dir scripts exec playwright install chromium   # first time only
+pnpm grafana-config && pnpm grafana-up                # start Grafana with data
+pnpm docs-screenshots                                 # overwrite docs/images/<name>-light.png / -dark.png
+pnpm docs-screenshots --cold                          # also cold storage screens (needs cold=true and pnpm seed --cold-days 30)
+pnpm docs-screenshots --only dashboard,meta           # retake only some
+```
+
+The screens (URL, viewport height, actions before the shot) are defined in `shots` in `scripts/docs-screenshots.ts`. Update it when a Grafana upgrade changes the UI.

@@ -68,7 +68,7 @@ Dashboard auto refresh calls the API (number of panels × number of refreshes) t
 | `maxRange` | 400 | Match the longest period that can be selected in the dashboard |
 | `maxKeys` | 400 | Match the number of keys that can be selected in the template variable |
 | `maxItems` / `maxPages` / `maxRcu` | Truncated (`truncated: true`) | Estimate from period × number of keys × items per key |
-| Response size (5.5MB) | 400 「応答が大きすぎます」 (response too large) | Aggregate with `interval`, shorten the period, or reduce columns with `fields` |
+| Response size (5.5MB) | 400 "The response is too large" | Aggregate with `interval`, shorten the period, or reduce columns with `fields` |
 
 - `maxRcu` works as "do not read the next page once exceeded". It can go over by up to one page (max 1MB, about 128 RCU)
 - Multiple keys and dates are read in parallel, so `maxItems` can be exceeded by the pages read at the same time (up to 8 pages)
@@ -79,17 +79,17 @@ Dashboard auto refresh calls the API (number of panels × number of refreshes) t
 | Symptom | Cause and fix |
 |---|---|
 | Grafana only shows `status code : 400 Bad Request` | Infinity does not show the body of 4xx responses. Try the same conditions with `pnpm check`, or look at `error` in the logs |
-| `Grafana の変数が置き換えられていません` (Grafana variables were not replaced) | A query for an alert (or anything other than a dashboard) uses template variables or `$__interval_ms`. Write the values directly |
+| `a Grafana variable was not replaced` | A query for an alert (or anything other than a dashboard) uses template variables or `$__interval_ms`. Write the values directly |
 | 403 in the data source test | IAM: check that the signing key has the `dynamodb-timeseries-api-invoke` permissions, and that Service is `execute-api` (`lambda` for a function URL). API key: check that the key is correct |
 | 403 and 200 alternate right after changing IAM permissions | IAM changes can take a few minutes to take effect. Wait a little and check again |
 | 500 `ValidationException` | The key names or time format in `datasets.yaml` differ from the actual table ([Defining datasets](02-datasets.md#28-common-mistakes)) |
 | 500 `ResourceNotFoundException` | Wrong table name or index name, or a different region |
-| 404 `データセット X は定義されていません` (dataset X is not defined) | You changed the settings but did not deploy again |
-| `応答が大きすぎます` (response too large) | See "Tuning limits" above |
+| 404 `Dataset X is not defined` | You changed the settings but did not deploy again |
+| `The response is too large` | See "Tuning limits" above |
 | `meta.truncated: true` | See "Tuning limits" above |
 | Panel is empty (no error) | No data in the period, wrong `key`, or Columns names differ from the column names in the response |
 | Local Grafana cannot reach `pnpm local-api` | On Linux, add `docker-compose.linux.yml`. With Docker Desktop / Rancher Desktop, do not add it (adding it makes the API unreachable) |
-| `pnpm check` shows `Endpoint がありません` (no Endpoint) | `AWS_REGION` differs from the deployed region, or the stack name differs (`--stack` / `--region`) |
+| `pnpm check` shows `The outputs of stack ... have no Endpoint` | `AWS_REGION` differs from the deployed region, or the stack name differs (`--stack` / `--region`) |
 
 ## 6.5 Clean up
 

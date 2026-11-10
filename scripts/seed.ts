@@ -34,7 +34,7 @@ const { values: args } = parseArgs({
 });
 const region = process.env.AWS_REGION ?? 'ap-northeast-1';
 const dataset = loadConfig(path.resolve(args.config))[args.dataset];
-if (!dataset) throw new Error(`datasets.yaml にデータセット ${args.dataset} がありません`);
+if (!dataset) throw new Error(`Dataset ${args.dataset} is not in datasets.yaml`);
 const table = args.table;
 const raw = new DynamoDBClient({ region });
 const doc = DynamoDBDocumentClient.from(raw);
@@ -44,8 +44,7 @@ async function ensureTable(): Promise<void> {
     await raw.send(new DescribeTableCommand({ TableName: table }));
   } catch (e) {
     if (!(e instanceof ResourceNotFoundException)) throw e;
-    if (!args.create)
-      throw new Error(`テーブル ${table} がありません。cdk deploy -c sample=true でデプロイするか、DynamoDB Local では --create を付けてください`);
+    if (!args.create) throw new Error(`Table ${table} does not exist. Deploy with cdk deploy -c sample=true, or add --create for DynamoDB Local`);
     await raw.send(
       new CreateTableCommand({
         TableName: table,
@@ -60,7 +59,7 @@ async function ensureTable(): Promise<void> {
         ],
       }),
     );
-    console.log(`テーブル ${table} を作りました`);
+    console.log(`Created table ${table}`);
   }
 }
 
@@ -89,9 +88,9 @@ async function writeAll(items: Record<string, unknown>[]): Promise<void> {
 
 /** 生成したデータの、さらに前の期間（UTC の日単位）を 1 分の集計にして S3 に書く */
 async function writeCold(rooms: number, hotStart: number, coldDays: number): Promise<void> {
-  if (!dataset.cold) throw new Error(`--cold-days には、datasets.yaml の ${args.dataset} に cold が必要です`);
+  if (!dataset.cold) throw new Error(`--cold-days requires cold on ${args.dataset} in datasets.yaml`);
   const bucket = (await getStackOutputs(args.stack, region)).ColdBucketName;
-  if (!bucket) throw new Error(`スタック ${args.stack} の出力に ColdBucketName がありません。-c cold=true でデプロイしてください`);
+  if (!bucket) throw new Error(`The outputs of stack ${args.stack} have no ColdBucketName. Deploy with -c cold=true`);
   // 境界（hotStart）を含む日の終わりまでを書く（境界より後はホットから読むので、重なっても結果は変わらない）
   const end = Math.floor(hotStart / 86_400_000) * 86_400_000 + 86_400_000 - 1;
   const { items } = generateItems({ rooms, days: coldDays + 1, stepMs: Number(args.step) * 60_000, end });
@@ -105,7 +104,7 @@ async function writeCold(rooms: number, hotStart: number, coldDays: number): Pro
     ),
   ].filter(([, rows]) => rows.length > 0);
   const s3 = new S3Client({ region });
-  console.log(`s3://${bucket}/ に ${days.length} 日分の 1 分の集計を書きます（${days[0]?.[0]} 〜 ${days.at(-1)?.[0]}、UTC）`);
+  console.log(`Writing 1-minute rollups for ${days.length} days to s3://${bucket}/ (${days[0]?.[0]} to ${days.at(-1)?.[0]}, UTC)`);
   for (const [date, rows] of days) await writeDay({ s3, bucket }, args.dataset, date, rollup(rows, columns));
 }
 
@@ -118,11 +117,11 @@ for (const item of items) {
   const ttl = item.deviceId === 'devices' ? undefined : expiresAt(item.ts as number, dataset);
   if (ttl !== undefined) item.expiresAt = ttl;
 }
-const ttl = dataset.cold ? `、TTL ${dataset.cold.hotRetention} + 1 日` : '';
-console.log(`${table} に ${items.length} 件を書き込みます（${roomIds(rooms).join(', ')}、${args.days} 日分、${args.step} 分おき${ttl}）`);
+const ttl = dataset.cold ? `, TTL ${dataset.cold.hotRetention} + 1 day` : '';
+console.log(`Writing ${items.length} items to ${table} (${roomIds(rooms).join(', ')}, ${args.days} days, every ${args.step} minutes${ttl})`);
 await writeAll(items);
-console.log(`完了しました: ${new Date(start).toISOString()} 〜 ${new Date(end).toISOString()}`);
+console.log(`Done: ${new Date(start).toISOString()} to ${new Date(end).toISOString()}`);
 if (Number(args['cold-days']) > 0) {
   await writeCold(rooms, start, Number(args['cold-days']));
-  console.log('コールドストアへの書き込みが完了しました');
+  console.log('Finished writing to the cold storage');
 }

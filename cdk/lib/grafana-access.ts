@@ -17,7 +17,7 @@ export function createGrafanaAccess(scope: Construct, invokeStatements: iam.Poli
   });
   new cdk.CfnOutput(scope, 'GrafanaPolicyArn', {
     value: policy.managedPolicyArn,
-    description: 'EC2 のロールなど、既存のロールに付ける場合はこのポリシーを使う',
+    description: 'Attach this policy to an existing role, such as an EC2 instance role',
   });
 
   if (o.grafanaUser) {

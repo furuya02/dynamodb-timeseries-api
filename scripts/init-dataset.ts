@@ -23,16 +23,16 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-const table = args.table ?? fail('使い方: pnpm init-dataset --table <テーブル名> [--index <GSI 名>] [--name <データセット名>] [--sample 100]');
+const table = args.table ?? fail('Usage: pnpm init-dataset --table <table name> [--index <GSI name>] [--name <dataset name>] [--sample 100]');
 const client = new DynamoDBClient({ region: process.env.AWS_REGION ?? 'ap-northeast-1' });
 const desc = (await client.send(new DescribeTableCommand({ TableName: table }))).Table;
 const keySchema = args.index ? desc?.GlobalSecondaryIndexes?.find((g) => g.IndexName === args.index)?.KeySchema : desc?.KeySchema;
-if (!keySchema) fail(`インデックス ${args.index} がテーブル ${table} にありません`);
-const partitionKey = keySchema.find((k) => k.KeyType === 'HASH')?.AttributeName ?? fail('パーティションキーが見つかりません');
-const sortKey = keySchema.find((k) => k.KeyType === 'RANGE')?.AttributeName ?? fail('ソートキーのないテーブル（インデックス）は、時系列として扱えません');
+if (!keySchema) fail(`Index ${args.index} does not exist on table ${table}`);
+const partitionKey = keySchema.find((k) => k.KeyType === 'HASH')?.AttributeName ?? fail('Partition key not found');
+const sortKey = keySchema.find((k) => k.KeyType === 'RANGE')?.AttributeName ?? fail('A table (index) without a sort key cannot be used as time series');
 
 const items = (await client.send(new ScanCommand({ TableName: table, IndexName: args.index, Limit: Number(args.sample) }))).Items ?? [];
-if (items.length === 0) fail('アイテムが 1 件もないため推定できません');
+if (items.length === 0) fail('Cannot infer anything because the table has no items');
 
 const result = inferDataset({
   table,
@@ -43,9 +43,9 @@ const result = inferDataset({
   tableKeys: (desc?.KeySchema ?? []).map((k) => k.AttributeName ?? ''),
   items,
 });
-console.log(`# pnpm init-dataset --table ${table}${args.index ? ` --index ${args.index}` : ''} の推定結果（先頭 ${items.length} 件から）`);
-console.log('# config/datasets.yaml の datasets: の下に貼り、内容を確認してから使ってください');
-for (const n of result.notes) console.log(`# 確認: ${n}`);
+console.log(`# pnpm init-dataset --table ${table}${args.index ? ` --index ${args.index}` : ''} result (inferred from the first ${items.length} items)`);
+console.log('# Paste this under datasets: in config/datasets.yaml and review it before use');
+for (const n of result.notes) console.log(`# check: ${n}`);
 console.log(
   stringify({ [result.name]: result.dataset }, { flowCollectionPadding: true })
     .replace(/^/gm, '  ')

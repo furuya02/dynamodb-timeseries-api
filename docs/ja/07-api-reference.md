@@ -8,6 +8,29 @@
 
 時系列を返します。
 
+```mermaid
+sequenceDiagram
+  participant G as Grafana（Infinity）
+  participant A as API Gateway / 関数 URL
+  participant L as Lambda
+  participant D as DynamoDB
+  participant S as Athena（コールドストア、任意）
+  G->>A: GET /query?dataset&key&from&to&interval&agg
+  A->>L: 呼び出し（IAM / API キーを確認済み）
+  L->>L: datasets.yaml に照らしてパラメータを検証
+  alt cacheTtlSeconds 以内の同じリクエスト
+    L-->>G: キャッシュの応答（meta.cache = hit）
+  else
+    par 現在 − hotRetention 以降
+      L->>D: キー（と日付）ごとに Query、上限で打ち切り
+    and それより前（cold があるときだけ）
+      L->>S: dataset / 日付のパーティションで絞った SQL
+    end
+    L->>L: 途中集計を足し合わせ、long / wide に整形
+    L-->>G: rows + columns + meta
+  end
+```
+
 ### (1) パラメータ
 
 | パラメータ | 必須 | 説明 |
@@ -74,7 +97,7 @@
 [
   {
     "name": "room_temp",
-    "description": "部屋ごとの温度と湿度（サンプル）",
+    "description": "Temperature and humidity per room (sample)",
     "columns": [{ "name": "temperature", "type": "number", "unit": "celsius" }],
     "maxRange": "31d",
     "maxKeys": 20
@@ -103,25 +126,25 @@
 | 404 | 未定義のデータセット、未知のパス |
 | 500 | DynamoDB のエラー（`エラー名: 内容`） |
 
-400 の主なメッセージ:
+400 の主なメッセージ（メッセージは英語です）:
 
 | メッセージ | 原因 |
 |---|---|
-| `dataset を指定してください` | `dataset` がない |
-| `key を指定してください（複数の場合はカンマ区切り）` | `key` がない |
-| `key X は許可されていません（keys.pattern / keys.values）` | 許可されないキー |
-| `key は N 個まで指定できます（limits.maxKeys）` | キーが多すぎる |
-| `from を UNIX 時刻（ミリ秒）で指定してください` | `from` / `to` が数値でない |
-| `from は to 以前の時刻を指定してください` | `from > to` |
-| `期間が長すぎます。31d 以内にしてください（limits.maxRange）` | 期間が `maxRange` を超える |
-| `fields の X はデータセットに定義されていません` | 定義にない列 |
-| `interval はミリ秒（...）か、30s / 5m / 1h / 1d の形式で指定してください` | `interval` の形式 |
-| `agg は ... のいずれかを指定してください` / `agg は interval と一緒に指定してください` | `agg` の誤り |
-| `latest と interval は同時に指定できません` | 組み合わせの誤り |
-| `format は long / wide のいずれかを指定してください` | `format` の誤り |
-| `tz は UTC、...` | タイムゾーンの誤り |
-| `X=...: Grafana の変数が置き換えられていません` | テンプレート変数や `$__interval_ms` がそのまま届いた（アラートなど） |
-| `応答が大きすぎます（...）` | 応答が 5.5MB を超える |
+| `Specify dataset` | `dataset` がない |
+| `Specify key (comma-separated for multiple keys)` | `key` がない |
+| `Key X is not allowed (keys.pattern / keys.values)` | 許可されないキー |
+| `Up to N keys can be specified (limits.maxKeys)` | キーが多すぎる |
+| `Specify from as UNIX time in milliseconds. ...` | `from` / `to` が数値でない |
+| `from must be earlier than or equal to to` | `from > to` |
+| `The time range is too long. Keep it within 31d (limits.maxRange)` | 期間が `maxRange` を超える |
+| `X in fields is not defined in the dataset. ...` | 定義にない列 |
+| `interval must be milliseconds (...) or 30s / 5m / 1h / 1d` | `interval` の形式 |
+| `agg must be one of ...` / `agg requires interval` | `agg` の誤り |
+| `latest and interval cannot be used together` | 組み合わせの誤り |
+| `format must be one of long / wide` | `format` の誤り |
+| `tz must be UTC, ...` | タイムゾーンの誤り |
+| `X=...: a Grafana variable was not replaced. ...` | テンプレート変数や `$__interval_ms` がそのまま届いた（アラートなど） |
+| `The response is too large (...)` | 応答が 5.5MB を超える |
 
 ## 7.5 認証
 

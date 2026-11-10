@@ -15,6 +15,7 @@
     "grafana-up": "docker compose -f grafana/docker-compose.yml up -d",
     "grafana-down": "docker compose -f grafana/docker-compose.yml down",
     "local-api": "pnpm --dir scripts exec tsx local-api.ts",
+    "docs-screenshots": "pnpm --dir scripts exec tsx docs-screenshots.ts",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "pnpm -r typecheck",
