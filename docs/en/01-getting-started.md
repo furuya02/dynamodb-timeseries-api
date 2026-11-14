@@ -110,7 +110,7 @@ OK GET /query latest value (101ms): 2026-11-04T20:59:00.000Z {"time":...,"key":"
 
 ## 1.7 View in Grafana
 
-Start Grafana OSS 13.3.0 and Infinity 4.1.5 with local Docker.
+Start Grafana OSS 13.3.1 and Infinity 4.1.5 with local Docker.
 
 ### (1) Create an access key
 

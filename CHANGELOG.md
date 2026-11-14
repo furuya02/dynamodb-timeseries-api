@@ -49,6 +49,6 @@ First release.
 - Deploy options: `exposure` (`restPublic`, `functionUrl`, `restPrivate`), `auth` (`iam`, `apiKey`), `grafanaUser`, `grafanaRoleTrust`, `logRetentionDays`, `throttleRate`, `throttleBurst`, `sample`
 - Scripts: `pnpm seed`, `pnpm init-dataset`, `pnpm check`, `pnpm grafana-config`, `pnpm local-api`
 - Sample data with day-to-day weather, weekday air conditioning, per-room differences, heat spikes, and gaps
-- Local Grafana setup (Grafana OSS 13.3.0 + Infinity 4.1.5) with a sample dashboard (time series, gauge, bar gauge, bar chart, table) and alert rule
+- Local Grafana setup (Grafana OSS 13.3.1 + Infinity 4.1.5) with a sample dashboard (time series, gauge, bar gauge, bar chart, table) and alert rule
 - Documentation in English and Japanese
 - Tests (Vitest): unit, CDK template, and DynamoDB Local integration tests; CI on GitHub Actions
