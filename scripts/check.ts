@@ -60,7 +60,7 @@ const ok = (r: ApiResponse, step: string) => {
 // 1. データセット一覧
 const ds = ok(await get('datasets'), 'GET /datasets');
 const names = (ds.body as { name: string }[]).map((d) => d.name);
-console.log(`\nOK GET /datasets（${ds.ms}ms）: ${names.join(', ')}`);
+console.log(`\nOK GET /datasets (${ds.ms}ms): ${names.join(', ')}`);
 const dataset = args.dataset ?? names[0];
 if (!dataset) fail('GET /datasets', { status: ds.status, body: 'No datasets are defined' }, target.auth);
 
