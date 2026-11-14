@@ -64,8 +64,8 @@ importers:
         specifier: 2.1148.0
         version: 2.1148.0
       hyparquet:
-        specifier: 1.32.0
-        version: 1.32.0
+        specifier: 1.33.0
+        version: 1.33.0
       tsx:
         specifier: ^4.23.0
         version: 4.23.15
@@ -922,6 +922,9 @@ packages:
 
   hyparquet@1.32.0:
     resolution: {integrity: sha512-SpkvdfgQjcdCJA+MTzo0WSreLLy/aLRYs3xetk1SsuFvq8vF+J/97OaRnZhf+p5Nx3J27i9FhSC0bJ5eQZG/7Q==}
+
+  hyparquet@1.33.0:
+    resolution: {integrity: sha512-8EKLe73vRIMEKVEOe5y+kIzFxo6AvbLvd5ukd7P+yv3RvG0+TZM4qO8imbqxU6zds5pV+OeWRTMwy95mhHUheg==}
 
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
@@ -1923,6 +1926,8 @@ snapshots:
       hyparquet: 1.32.0
 
   hyparquet@1.32.0: {}
+
+  hyparquet@1.33.0: {}
 
   js-tokens@10.0.0: {}
 
