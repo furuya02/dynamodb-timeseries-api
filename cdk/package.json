@@ -20,11 +20,11 @@
     "vitest": "5.1.0"
   },
   "dependencies": {
-    "@aws-sdk/client-athena": "3.1164.0",
-    "@aws-sdk/client-dynamodb": "3.1164.0",
-    "@aws-sdk/client-firehose": "3.1164.0",
-    "@aws-sdk/client-s3": "3.1164.0",
-    "@aws-sdk/lib-dynamodb": "3.1164.0",
+    "@aws-sdk/client-athena": "3.1166.0",
+    "@aws-sdk/client-dynamodb": "3.1166.0",
+    "@aws-sdk/client-firehose": "3.1166.0",
+    "@aws-sdk/client-s3": "3.1166.0",
+    "@aws-sdk/lib-dynamodb": "3.1166.0",
     "@aws-sdk/util-dynamodb": "3.996.9",
     "aws-cdk-lib": "2.275.0",
     "constructs": "^10.5.0",
