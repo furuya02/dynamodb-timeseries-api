@@ -11,7 +11,7 @@ Grafana calls the API with the Infinity data source (yesoreyeram-infinity-dataso
 | Grafana Cloud | IAM (access key) or API key | Not tested (based on the Infinity documentation) |
 | Amazon Managed Grafana | IAM (access key) | Not tested |
 
-Tested combination: Grafana OSS 13.3.0, Infinity 4.1.5 (November 2026).
+Tested combination: Grafana OSS 13.3.1, Infinity 4.1.5 (November 2026).
 
 ## 3.1 Install Infinity
 

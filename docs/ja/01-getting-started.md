@@ -108,7 +108,7 @@ OK GET /query latest value (101ms): 2026-11-04T20:59:00.000Z {"time":...,"key":"
 
 ## 1.7 Grafana で表示する
 
-ローカルの Docker で Grafana OSS 13.3.0 と Infinity 4.1.5 を起動します。
+ローカルの Docker で Grafana OSS 13.3.1 と Infinity 4.1.5 を起動します。
 
 ### (1) アクセスキーを作る
 

@@ -11,7 +11,7 @@ Grafana からは、Infinity データソース（yesoreyeram-infinity-datasourc
 | Grafana Cloud | IAM（アクセスキー）または API キー | 未検証（Infinity のドキュメントによる） |
 | Amazon Managed Grafana | IAM（アクセスキー） | 未検証 |
 
-確認した組み合わせ: Grafana OSS 13.3.0、Infinity 4.1.5（2026/11）。
+確認した組み合わせ: Grafana OSS 13.3.1、Infinity 4.1.5（2026/11）。
 
 ## 3.1 Infinity を入れる
 
