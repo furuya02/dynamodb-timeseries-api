@@ -100,8 +100,8 @@ The script prints its messages in Japanese, as shown below.
 Endpoint: https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com/v1/
 Auth: IAM (SigV4, service execute-api, ap-northeast-1)
 
-OK GET /datasets（161ms）: room_temp
-OK GET /keys?dataset=room_temp（114ms）: room-01, room-02, room-03
+OK GET /datasets (161ms): room_temp
+OK GET /keys?dataset=room_temp (114ms): room-01, room-02, room-03
 OK GET /query last 1 hour, 5-minute average (73ms): 12 points, items read 60, consumed RCU 0.5
 OK GET /query latest value (101ms): 2026-11-04T20:59:00.000Z {"time":...,"key":"room-01","temperature":20.3,"humidity":59.2}
 ```
