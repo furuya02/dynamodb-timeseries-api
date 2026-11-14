@@ -88,8 +88,8 @@ GET /query?dataset=room_temp&key=a,b&from=${__from}&to=${__to}&interval=${__inte
 | | バージョン |
 |---|---|
 | Node.js / pnpm | 22.23.4 / 10.24.0（CI では Node.js 22 と 24） |
-| AWS CDK | aws-cdk-lib 2.275.0、CLI 2.1147.0 |
-| AWS SDK for JavaScript | 3.1161.0（Lambda ではランタイム同梱の SDK を使用） |
+| AWS CDK | aws-cdk-lib 2.275.0、CLI 2.1148.0 |
+| AWS SDK for JavaScript | 3.1164.0（Lambda ではランタイム同梱の SDK を使用） |
 | Grafana / Infinity | Grafana OSS 13.3.0 / Infinity 4.1.5 |
 | DynamoDB Local | 3.3.2 |
 
