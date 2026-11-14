@@ -152,6 +152,9 @@ const datasetSchema = z
     d.fields.forEach((f, i) => {
       const label = f.alias ?? f.name.replaceAll('.', '_'); // 応答の列名（lambda/api/transform.ts の columnName と同じ）
       if (names.has(label)) ctx.addIssue({ code: 'custom', path: ['fields', i], message: `Duplicate column name ${label}` });
+      // 応答の行は { time, key, ...値 } の形なので、同じ名前の列があると time / key を上書きしてしまう
+      if (label === 'time' || label === 'key')
+        ctx.addIssue({ code: 'custom', path: ['fields', i], message: `Column name ${label} is reserved for the response. Set alias to another name` });
       names.add(label);
       if (f.name === d.sortKey.name)
         ctx.addIssue({

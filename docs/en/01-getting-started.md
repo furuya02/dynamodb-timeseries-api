@@ -94,7 +94,7 @@ Before configuring Grafana, check that the API responds.
 pnpm check
 ```
 
-The script prints its messages in Japanese, as shown below.
+The output looks like this.
 
 ```
 Endpoint: https://xxxxxxxxxx.execute-api.ap-northeast-1.amazonaws.com/v1/

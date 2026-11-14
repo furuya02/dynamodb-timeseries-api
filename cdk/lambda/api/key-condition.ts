@@ -24,9 +24,19 @@ export function partitionValues(d: ResolvedDataset, key: string, from: number, t
  */
 export function sortRange(d: ResolvedDataset, from: number, to: number): [string | number, string | number] {
   const { format, prefix, timezone } = d.sortKey;
-  if (format === 'iso8601') return [prefix + toLocalIso(from, timezone), prefix + toLocalIso(to, timezone) + MAX_CHAR];
+  if (format === 'iso8601') return [prefix + isoLowerBound(toLocalIso(from, timezone)), prefix + toLocalIso(to, timezone) + MAX_CHAR];
   const [lo, hi] = format === 'epoch_s' ? [Math.floor(from / 1000), Math.floor(to / 1000)] : [from, to];
   return prefix ? [prefix + lo, prefix + hi] : [lo, hi];
+}
+
+/**
+ * ISO 8601 の範囲の下限。from ちょうどの値が日付だけ（2025-11-03）や分まで（2025-11-03T09:00）で保存されていても含まれるよう、
+ * 0 時ちょうどなら日付だけ、秒が 0 なら分までに縮める（文字列として短いほど小さい）
+ */
+function isoLowerBound(local: string): string {
+  if (local.endsWith('T00:00:00')) return local.slice(0, 10);
+  if (local.endsWith(':00')) return local.slice(0, 16);
+  return local;
 }
 
 /** ソートキーの値 → UNIX ミリ秒。読めない値は NaN */

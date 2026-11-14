@@ -122,10 +122,14 @@ export function inferSortKey(
   if (isoMatches.length > 0 && isoMatches.length * 2 >= values.length) {
     const [prefix, counts] = majority(isoMatches.map((m) => m[1]));
     notePrefixes(counts, prefix);
-    if (!isoMatches.filter((m) => m[1] === prefix).every((m) => m[3])) {
-      notes.push('The sort key has no time zone. If times are stored in a zone other than UTC, set sortKey.timezone (e.g. Asia/Tokyo)');
-    }
-    return { sortKey: { name, format: 'iso8601', ...(prefix ? { prefix } : {}) }, match: (v) => v?.S !== undefined && ISO.exec(v.S)?.[1] === prefix };
+    const timezone = inferIsoTimezone(
+      isoMatches.filter((m) => m[1] === prefix).map((m) => m[3]),
+      notes,
+    );
+    return {
+      sortKey: { name, format: 'iso8601', ...(prefix ? { prefix } : {}), ...(timezone ? { timezone } : {}) },
+      match: (v) => v?.S !== undefined && ISO.exec(v.S)?.[1] === prefix,
+    };
   }
 
   // TEMP#1730000000 のようなプレフィックス + 数値
@@ -140,6 +144,26 @@ export function inferSortKey(
 
   notes.push(`Could not infer the time format of the sort key (e.g. ${scalar(values[0])}). Check format`);
   return { sortKey: { name, format: 'epoch_ms' }, match: () => true };
+}
+
+/**
+ * ISO 8601 のソートキーのタイムゾーン。
+ * 問い合わせの範囲は sortKey.timezone の壁時計の文字列で比べるため、+09:00 のようなオフセット付きで保存されている場合は、
+ * そのオフセットを timezone にしないと範囲の端の時間を読み漏らす。Z だけなら既定の UTC のまま（undefined）
+ */
+function inferIsoTimezone(zones: (string | undefined)[], notes: string[]): string | undefined {
+  const distinct = [...new Set(zones.map((z) => (z === undefined ? undefined : z === 'Z' ? 'UTC' : `${z.slice(0, 3)}:${z.slice(-2)}`)))];
+  if (distinct.includes(undefined)) {
+    notes.push('The sort key has no time zone. If times are stored in a zone other than UTC, set sortKey.timezone (e.g. Asia/Tokyo)');
+    return undefined;
+  }
+  if (distinct.length > 1) {
+    notes.push(
+      `The sort key has values with different offsets (${distinct.join(', ')}). The query range is compared in sortKey.timezone, so values in other offsets can be missed at the ends of the range`,
+    );
+    return undefined;
+  }
+  return distinct[0] === 'UTC' ? undefined : distinct[0];
 }
 
 /**
@@ -191,7 +215,7 @@ export function keyPattern(keys: string[]): string {
 }
 
 /** 属性の型（数値の文字列は number、Map / List / Set は json、混在は string） */
-export function inferFields(items: Item[], exclude: Set<string>, notes: string[]): { name: string; type: string }[] {
+export function inferFields(items: Item[], exclude: Set<string>, notes: string[]): { name: string; type: string; alias?: string }[] {
   const types = new Map<string, Set<string>>();
   for (const item of items) {
     for (const [name, v] of Object.entries(item)) {
@@ -216,6 +240,12 @@ export function inferFields(items: Item[], exclude: Set<string>, notes: string[]
   return [...types].map(([name, ts]) => {
     ts.delete('null');
     if (ts.size > 1) notes.push(`${name} has mixed types (${[...ts].join(' / ')}). Check type`);
-    return { name, type: ts.size === 1 ? [...ts][0] : 'string' };
+    const type = ts.size === 1 ? [...ts][0] : 'string';
+    // 応答の列名 time / key は予約されているため、別名を付ける
+    if (name === 'time' || name === 'key') {
+      notes.push(`${name} is a reserved column name in the response. Returned as ${name}_value (alias)`);
+      return { name, type, alias: `${name}_value` };
+    }
+    return { name, type };
   });
 }

@@ -140,6 +140,22 @@ datasets:
     expect(msg).toContain('Do not list the sort key in fields');
     expect(msg).toContain('Duplicate column name meta_fw');
   });
+
+  it('応答の列と同じ名前（time / key）は使えない。alias で別の名前にすれば使える', () => {
+    const yaml = (fields: string) => `
+datasets:
+  ds:
+    table: tbl
+    partitionKey: { name: pk }
+    sortKey: { name: ts, format: epoch_ms }
+    keys: { values: [a] }
+    fields: ${fields}
+`;
+    const msg = errorOf(yaml('[ { name: time }, { name: key, type: string } ]'));
+    expect(msg).toContain('Column name time is reserved');
+    expect(msg).toContain('Column name key is reserved');
+    expect(errorOf(yaml('[ { name: time, alias: measured_at }, { name: key, alias: device_key, type: string } ]'))).toBe('no error');
+  });
 });
 
 describe('loadConfig: cold', () => {

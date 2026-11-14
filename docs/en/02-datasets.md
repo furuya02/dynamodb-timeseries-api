@@ -40,7 +40,7 @@ It looks up the key names with DescribeTable and reads only the first 100 items 
 - The shape of the keys (a proposal for `keys.pattern`)
 - The attributes and their types
 
-The script prints its notes in Japanese, as shown below.
+The script prints its notes as `# check:` comments, as shown below.
 
 ```
 # check: Keys found: room-01. keys.pattern is a proposal based on their shape (not all keys were read)
@@ -69,8 +69,10 @@ Always read the `# check:` notes. The main notes are:
 | The sort key has multiple types | TEMP#, HUM#, etc. are mixed in a single-table design. The inference used the most common type, so define the other types as separate datasets with a different `prefix` |
 | N items have a different sort key format | Items that are not time series, such as registration items, are excluded from the inference |
 | The sort key has no time zone | If you store times in a zone other than UTC, specify `sortKey.timezone` |
+| The sort key has values with different offsets | The range is compared in `sortKey.timezone`, so values in other offsets can be missed at the ends of the range. Store times in one offset |
 | The partition key is split by date | If the date boundary is not UTC, specify `partitionKey.timezone` |
 | ... has mixed types | Check `type` |
+| ... is a reserved column name | `time` and `key` are columns of the response, so an `alias` (`time_value` / `key_value`) is added |
 
 ## 2.3 How to write it for each table design
 
@@ -139,7 +141,7 @@ This is for stored values that are JST times without an offset, such as `2025-11
 sortKey: { name: ts, format: iso8601, timezone: Asia/Tokyo }
 ```
 
-Values with `Z` or `+09:00` are read as written. Differences at the end, such as with or without `.000Z`, are handled automatically.
+The query range is compared as strings in `sortKey.timezone`. If the values carry an offset such as `+09:00`, set `timezone` to the same offset (`+09:00`); otherwise the ends of the range can be missed. `pnpm init-dataset` sets it from the stored values. Values ending in `Z` match the default `UTC`. Differences at the end, such as with or without `.000Z`, are handled automatically.
 
 ### (5) Use a GSI
 
@@ -230,7 +232,7 @@ When a response is truncated, `meta.truncated` in the response is `true`, and `m
 | `keys.values` | | List of accepted keys |
 | `keys.list.partitionValue` / `keys.list.attribute` | | Registration item to read the key list from |
 | `fields[].name` | Required | Attribute name. `a.b` for nested attributes. Do not list the sort key (it is returned automatically as the time column) |
-| `fields[].alias` | | Column name (default is the attribute name with `.` replaced by `_`). Column names must be unique |
+| `fields[].alias` | | Column name (default is the attribute name with `.` replaced by `_`). Column names must be unique, and `time` / `key` cannot be used (they are columns of the response) |
 | `fields[].type` | `number` | `number` / `string` / `boolean` / `json` |
 | `fields[].unit` | | Unit |
 | `fields[].scale` | | Conversion by multiplication (only for `number`) |
@@ -243,7 +245,7 @@ Specify time zones as `UTC`, an offset such as `+09:00`, or an IANA name such as
 
 ## 2.7 Configuration errors and deployment
 
-If the configuration file has errors, `cdk synth` / `cdk deploy` stops and lists which item of which dataset is wrong. The messages are printed in Japanese, as shown below.
+If the configuration file has errors, `cdk synth` / `cdk deploy` stops and lists which item of which dataset is wrong. The messages look like this.
 
 ```
 The configuration file has errors: config/datasets.yaml

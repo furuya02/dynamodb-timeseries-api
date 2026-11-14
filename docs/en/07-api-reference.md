@@ -37,9 +37,9 @@ sequenceDiagram
 |---|---|---|
 | `dataset` | Yes | Dataset name |
 | `key` | Yes | Key. Multiple keys comma-separated (duplicates and surrounding spaces are removed). Must match `keys.pattern` / `keys.values`, up to `limits.maxKeys` keys |
-| `from` / `to` | Yes | UNIX time (milliseconds). Both ends are inclusive. `to - from` must be within `limits.maxRange` |
+| `from` / `to` | Yes | UNIX time (milliseconds, up to 13 digits). Both ends are inclusive. `to - from` must be within `limits.maxRange` |
 | `fields` | | Columns to return (comma-separated. Column names or attribute names). All columns if omitted |
-| `interval` | | Aggregation bucket. An integer in milliseconds, or `30s` / `5m` / `1h` / `1d` |
+| `interval` | | Aggregation bucket. An integer in milliseconds, or `30s` / `5m` / `1h` / `1d`. Must be within `maxRange` |
 | `agg` | | `avg` (default) / `min` / `max` / `sum` / `count` / `last`. Specify together with `interval` |
 | `latest` | | `1` (or `true`) returns the latest single item per key. Cannot be specified together with `interval` |
 | `format` | | `long` (default) / `wide` |
@@ -119,7 +119,7 @@ With settings that cannot build a list (neither `keys.values` nor `keys.list`), 
 
 ## 7.4 Errors
 
-Error responses are `{ "error": "reason" }`. The messages are in Japanese.
+Error responses are `{ "error": "reason" }`. The messages are in English.
 
 | Status | Main reasons |
 |---|---|
@@ -139,6 +139,7 @@ Main 400 messages:
 | `Specify from as UNIX time in milliseconds. ...` | `from` / `to` is not a number |
 | `from must be earlier than or equal to to` | `from > to` |
 | `The time range is too long. Keep it within 31d (limits.maxRange)` | The period exceeds `maxRange` |
+| `interval is too long. Keep it within 31d (limits.maxRange)` | `interval` exceeds `maxRange` |
 | `X in fields is not defined in the dataset. ...` | Column not in the definition |
 | `interval must be milliseconds (...) or 30s / 5m / 1h / 1d` | `interval` format |
 | `agg must be one of ...` / `agg requires interval` | Invalid `agg` |

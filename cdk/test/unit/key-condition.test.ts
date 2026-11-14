@@ -39,9 +39,19 @@ describe('sortRange', () => {
   it('iso8601 は tz の壁時計で、上限に最大の文字を付けて末尾の違い（Z / .000Z / +09:00）を含める', () => {
     const d = base({ sortKey: { name: 'sk', format: 'iso8601', prefix: 'T#', timezone: 'Asia/Tokyo' } });
     const [lo, hi] = sortRange(d, T0, T0 + H) as [string, string];
-    expect(lo).toBe('T#2025-11-03T09:00:00');
+    expect(lo).toBe('T#2025-11-03T09:00');
     expect(hi).toBe('T#2025-11-03T10:00:00￿');
     expect('T#2025-11-03T10:00:00.000+09:00' < hi).toBe(true);
+  });
+
+  it.each([
+    ['0 時ちょうどは日付だけ', T0, '2025-11-03', '2025-11-03'],
+    ['秒が 0 なら分まで', T0 + 9 * H, '2025-11-03T09:00', '2025-11-03T09:00'],
+    ['秒があればそのまま', T0 + 9 * H + 5000, '2025-11-03T09:00:05', '2025-11-03T09:00:05.000Z'],
+  ])('iso8601 の下限: %s（from ちょうどの値 %s を含む）', (_, from, lo, stored) => {
+    const d = base({ sortKey: { name: 'sk', format: 'iso8601' } });
+    expect(sortRange(d, from, from)[0]).toBe(lo);
+    expect(stored >= lo).toBe(true);
   });
 });
 

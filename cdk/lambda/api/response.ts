@@ -6,6 +6,7 @@ import type { ColdResult } from './cold/reader';
 import { COLD_STEP_MS } from './cold/sql';
 import { ApiError } from './errors';
 import { compareRows } from './rows';
+import { offsetMs } from './time';
 import type { QueryRequest, ReadMeta, ReadResult, Row } from './types';
 
 /** Lambda の同期呼び出しの応答上限（6MB）に余裕を持たせた値 */
@@ -56,7 +57,8 @@ function mergeRows(req: QueryRequest, hot: Row[], cold: ColdResult | undefined):
     return [...coldRows, ...hot].sort(compareRows);
   }
   const buckets = addRows(new Map(), hot, req.columns, req.interval, req.tz);
-  if (cold) addBuckets(buckets, cold.buckets, req.columns, req.interval, req.tz);
+  // コールドストアは cold.meta.from の時点のオフセットで区切っている（cold/reader.ts）
+  if (cold) addBuckets(buckets, cold.buckets, req.columns, req.interval, req.tz, offsetMs(req.tz, cold.meta.from));
   return finalize(buckets, req.columns, req.agg);
 }
 

@@ -29,6 +29,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Unit tests failed on a fresh clone because `datasets.generated.json` did not exist yet
+- `interval` larger than `maxRange` let a query read far beyond `maxRange` after rounding to buckets; it is now rejected with 400
+- `from` / `to` longer than 13 digits caused a 500 instead of a 400
+- ISO 8601 sort keys: values stored as a date only (`2025-11-03`) or to the minute (`2025-11-03T09:00`) were missed when they equaled `from` exactly (for example, the first day with `interval=1d`)
+- `pnpm init-dataset` now sets `sortKey.timezone` from the offset of ISO 8601 values (such as `+09:00`); with the default `UTC`, the ends of each range were missed. Mixed offsets are reported as a note
+- Fields whose column name is `time` or `key` overwrote the response columns; they are now rejected by validation, and `pnpm init-dataset` adds an `alias`
+- Cold storage with a DST time zone: after a DST change, each cold bucket was merged into the previous bucket (a whole day off with `interval=1d`)
+- `-c coldIngest=scheduled` with `cold.hotRetention` shorter than `2d` left a gap before the boundary; it is now rejected at deploy time
+- `pnpm check`: the checked ranges now stay within the dataset's `maxRange`, an empty `datasets.yaml` no longer prints `HTTP 200` as a failure, and the empty key list shows the hint returned by the API
+- English docs said that CLI output, API errors, and configuration errors were in Japanese
+- Docs: stream ingestion is at-least-once (a retried batch can double counts); rebuild such days with `pnpm cold-backfill`
 
 ## [0.1.0] - Unreleased
 

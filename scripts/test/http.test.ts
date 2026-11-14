@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createRequester, parseJson } from '../lib/http.ts';
 
 /** 渡された URL とヘッダーを記録し、決まった応答を返す fetch */
-function fakeFetch(status = 200, body = '{"ok":true}') {
+function fakeFetch(status = 200, body = '{"ok":true}', headers: Record<string, string> = {}) {
   const calls: { url: string; headers: Record<string, string> }[] = [];
   const f = (async (url: URL | string, init?: RequestInit) => {
     calls.push({ url: String(url), headers: (init?.headers ?? {}) as Record<string, string> });
-    return new Response(body, { status });
+    return new Response(body, { status, headers });
   }) as typeof fetch;
   return { f, calls };
 }
@@ -35,11 +35,12 @@ describe('createRequester', () => {
   });
 
   it('認証なし: ヘッダーなし。JSON でない応答は文字列のまま、所要時間を測る', async () => {
-    const { f, calls } = fakeFetch(502, 'Bad Gateway');
+    const { f, calls } = fakeFetch(502, 'Bad Gateway', { 'X-Tsapi-Hint': 'hint' });
     let t = 0;
     const r = await createRequester({ endpoint: 'http://localhost:13000/', auth: { type: 'none' } }, { fetch: f, now: () => (t += 7) })('keys');
     expect(calls[0].headers).toEqual({});
-    expect(r).toEqual({ status: 502, body: 'Bad Gateway', ms: 7 });
+    expect(r).toMatchObject({ status: 502, body: 'Bad Gateway', ms: 7 });
+    expect(r.headers['x-tsapi-hint']).toBe('hint'); // ヘッダー名は小文字になる
   });
 });
 

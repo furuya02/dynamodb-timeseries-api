@@ -28,7 +28,7 @@ datasets:
 | 項目 | 既定値 | 内容 |
 |---|---|---|
 | `type` | `athena` | 読み先の種類（今は Athena のみ） |
-| `hotRetention` | `7d` | 境界 = 現在 − hotRetention（1 分単位に切り捨て）。`90m` / `12h` / `7d` の形式 |
+| `hotRetention` | `7d` | 境界 = 現在 − hotRetention（1 分単位に切り捨て）。`90m` / `12h` / `7d` の形式。`-c coldIngest=scheduled` では `2d` 以上 |
 | `maxRange` | `400d` | cold のあるデータセットでは `limits.maxRange` の代わりにこの値で期間を確かめる（DynamoDB を読む期間は hotRetention までに収まるため） |
 
 ### (2) デプロイ
@@ -95,7 +95,7 @@ API の Lambda には、ワークグループ・Glue テーブル・`data/` の�
 | DynamoDB の読み込み | 1 日分を 1 回読む（RCU を消費） | なし（Streams の読み取りは Lambda からなら無料） |
 | 費用 | Lambda と RCU | Lambda と Firehose（取り込み・形式変換・動的パーティショニングの量に応じた課金） |
 
-どちらでも、コールドを読むのは hotRetention より前なので、取り込みが数時間遅れても表示は変わりません。
+どちらでも、コールドを読むのは hotRetention より前なので、取り込みが数時間遅れても表示は変わりません。`scheduled` は前日分（UTC）を 01:00 UTC に取り込むため、`hotRetention` は `2d` 以上にしてください。短いと間が欠けるので、デプロイ時にエラーにします。
 
 ### (1) 過去分の取り込み（pnpm cold-backfill）
 
@@ -120,6 +120,7 @@ Done
 - 既存のテーブルは、デプロイの前に Streams を有効にしておきます（`StreamViewType` は `NEW_IMAGE` か `NEW_AND_OLD_IMAGES`）。デプロイ時にストリームの ARN を読み取ります
 - イベントソースマッピングは `LATEST` から読みます。デプロイ直後、マッピングが有効になる前（確認では約 40 秒）に書いたアイテムは取り込まれません。必要なら、その日を `pnpm cold-backfill` で取り込みます
 - 取り込むのは INSERT だけです。同じキー・時刻のアイテムを上書きすると MODIFY になり、取り込みません（件数を二重に数えないため）。直したい日は `pnpm cold-backfill` で作り直します
+- 少なくとも 1 回は届く方式です。途中で失敗したバッチを Lambda がやり直すと、すでに Firehose に送った分をもう一度送り、その時間の件数と合計が 2 倍になります。その日は `pnpm cold-backfill` で作り直します
 - テーブルを読むデータセットが複数あれば、1 つのストリームから全部に振り分けます（パーティションキーの値を template と突き合わせてキーを取り出します）
 
 ### (3) サンプルデータ（pnpm seed --cold-days）

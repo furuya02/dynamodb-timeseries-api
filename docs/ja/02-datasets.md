@@ -67,8 +67,10 @@ DescribeTable でキーの名前を調べ、Scan で先頭の 100 件（`--sampl
 | The sort key has multiple types | シングルテーブル設計で TEMP# と HUM# などが混在しています。多い方で推定したので、ほかの種類は `prefix` を変えた別のデータセットにします |
 | N items have a different sort key format | 登録用アイテムなど、時系列でないアイテムを推定から除いています |
 | The sort key has no time zone | UTC 以外で保存しているなら `sortKey.timezone` を指定します |
+| The sort key has values with different offsets | 範囲は `sortKey.timezone` で比べるため、ほかのオフセットの値は範囲の端で読み漏れることがあります。保存するオフセットをそろえます |
 | The partition key is split by date | 日付の区切りが UTC 以外なら `partitionKey.timezone` を指定します |
 | ... has mixed types | `type` を確かめます |
+| ... is a reserved column name | `time` と `key` は応答の列なので、`alias`（`time_value` / `key_value`）を付けています |
 
 ## 2.3 テーブル設計ごとの書き方
 
@@ -137,7 +139,7 @@ flowchart LR
 sortKey: { name: ts, format: iso8601, timezone: Asia/Tokyo }
 ```
 
-`Z` や `+09:00` が付いた値は、その表記どおりに読みます。`.000Z` の有無など末尾の違いは自動で吸収します。
+問い合わせの範囲は、`sortKey.timezone` の時刻の文字列として比べます。`+09:00` のようなオフセットが付いた値は、`timezone` を同じオフセット（`+09:00`）にしてください。違うと、範囲の端の時間を読み漏らします。`pnpm init-dataset` は、保存されている値から設定します。`Z` で終わる値は、既定の `UTC` のままで合います。`.000Z` の有無など末尾の違いは自動で吸収します。
 
 ### (5) GSI を使う
 
@@ -228,7 +230,7 @@ datasets:
 | `keys.values` | | 受け付けるキーの列挙 |
 | `keys.list.partitionValue` / `keys.list.attribute` | | キー一覧を読む登録用アイテム |
 | `fields[].name` | 必須 | 属性名。`a.b` でネスト属性。ソートキーは書かない（時刻列として自動で返す） |
-| `fields[].alias` | | 列名（既定は `.` を `_` にした属性名）。列名は重複できない |
+| `fields[].alias` | | 列名（既定は `.` を `_` にした属性名）。列名は重複できず、`time` / `key` は使えない（応答の列のため） |
 | `fields[].type` | `number` | `number` / `string` / `boolean` / `json` |
 | `fields[].unit` | | 単位 |
 | `fields[].scale` | | 掛け算での換算（`number` のときだけ） |
