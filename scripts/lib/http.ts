@@ -11,6 +11,8 @@ export interface ApiResponse {
   status: number;
   /** JSON として読めれば解析した値、読めなければ文字列 */
   body: unknown;
+  /** 応答ヘッダー（名前は小文字） */
+  headers: Record<string, string>;
   ms: number;
 }
 
@@ -54,7 +56,7 @@ export function createRequester(target: Target, options: RequesterOptions = {}):
     const started = now();
     const res = await doFetch(url, { headers });
     const text = await res.text();
-    return { status: res.status, body: parseJson(text), ms: now() - started };
+    return { status: res.status, body: parseJson(text), headers: Object.fromEntries(res.headers), ms: now() - started };
   };
 }
 

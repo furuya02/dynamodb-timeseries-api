@@ -67,6 +67,33 @@ describe('inferDataset', () => {
     expect(r.notes.join('\n')).toContain('The sort key has no time zone');
   });
 
+  it.each([
+    ['+09:00', '2025-11-03T09:00:00+09:00', '+09:00'],
+    ['+0900（コロンなし）', '2025-11-03T09:00:00+0900', '+09:00'],
+    ['Z', '2025-11-03T00:00:00Z', undefined],
+  ])('オフセット付きの ISO 8601（%s）→ そのオフセットを sortKey.timezone にする', (_, sk, timezone) => {
+    const r = inferDataset(input({ items: [{ pk: S('d1'), sk: S(sk), v: N(1) }] }));
+    expect((r.dataset.sortKey as Record<string, string>).timezone).toBe(timezone);
+    expect(r.notes.join('\n')).not.toContain('time zone');
+    expect(validate(r).success).toBe(true);
+  });
+
+  it('オフセットが混在する ISO 8601 → timezone は決めず、注記を出す', () => {
+    const items = [S('2025-11-03T00:00:00Z'), S('2025-11-03T09:00:00+09:00')].map((sk) => ({ pk: S('d1'), sk, v: N(1) }));
+    const r = inferDataset(input({ items }));
+    expect((r.dataset.sortKey as Record<string, string>).timezone).toBeUndefined();
+    expect(r.notes.join('\n')).toContain('different offsets (UTC, +09:00)');
+  });
+
+  it('属性名 time / key は、応答の列と重ならないよう alias を付ける', () => {
+    const r = inferDataset(input({ items: [{ pk: S('d1'), sk: N(T0), time: N(1), key: S('x') }] }));
+    expect(r.dataset.fields).toEqual([
+      { name: 'time', type: 'number', alias: 'time_value' },
+      { name: 'key', type: 'string', alias: 'key_value' },
+    ]);
+    expect(validate(r).success).toBe(true);
+  });
+
   it('プレフィックス + epoch（TEMP#1730000000）', () => {
     const r = inferDataset(
       input({

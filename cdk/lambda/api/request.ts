@@ -39,6 +39,8 @@ export function parseQueryRequest(datasets: Datasets, p: QueryParams): QueryRequ
   if (to - from > maxRange) throw new ApiError(400, `The time range is too long. Keep it within ${rangeText} (${rangeName})`);
 
   const interval = p.interval === undefined || p.interval === '' ? undefined : parseInterval(p.interval);
+  // 区切りに合わせて丸めると期間が広がるため、interval も上限までにする（丸めた後の期間は最大で maxRange + 2 × interval）
+  if (interval !== undefined && interval > maxRange) throw new ApiError(400, `interval is too long. Keep it within ${rangeText} (${rangeName})`);
   const agg = parseAgg(p.agg, interval);
   const latest = parseLatest(p.latest);
   if (latest && interval !== undefined) throw new ApiError(400, 'latest and interval cannot be used together');
@@ -105,8 +107,9 @@ export function isAllowedKey(d: ResolvedDataset, k: string): boolean {
   return re.test(k);
 }
 
+/** UNIX ミリ秒は 13 桁まで（2286 年まで）。それより大きい値は日時の計算が RangeError になりうる */
 function parseTime(v: string | undefined, label: 'from' | 'to'): number {
-  if (!v || !/^\d{1,16}$/.test(v)) throw new ApiError(400, `Specify ${label} as UNIX time in milliseconds. In Grafana, use \${__${label}}`);
+  if (!v || !/^\d{1,13}$/.test(v)) throw new ApiError(400, `Specify ${label} as UNIX time in milliseconds. In Grafana, use \${__${label}}`);
   return Number(v);
 }
 

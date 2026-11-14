@@ -1,3 +1,4 @@
+import { parseDuration } from '../lambda/api/time';
 import { ConfigError, type ResolvedDataset } from './config';
 
 // ---------------------------------------------------------------
@@ -98,6 +99,9 @@ export function readOptions(get: (key: string) => unknown): DeployOptions {
   };
 }
 
+/** scheduled で必要な hotRetention の最小値（前日分の取り込みが終わるまでの時間 + 余裕） */
+const MIN_SCHEDULED_HOT_RETENTION_MS = 2 * 86_400_000;
+
 /** 設定ファイルとデプロイオプションの食い違いを確かめる（cold を書いたデータセットがあるのに -c cold=true がない、など） */
 export function checkOptionsAgainstConfig(datasets: Record<string, ResolvedDataset>, o: DeployOptions): void {
   const errors: string[] = [];
@@ -116,6 +120,13 @@ export function checkOptionsAgainstConfig(datasets: Record<string, ResolvedDatas
       const d = datasets[name];
       if (!d.keys.values && !d.keys.list) {
         errors.push(`datasets.${name}: -c coldIngest=scheduled requires keys.values or keys.list to list the keys (no Scan is used)`);
+      }
+      // 前日分は翌日 01:00 UTC に取り込むため、直近 2 日弱はコールドストアにまだない。hotRetention が短いと、その間がどちらからも読めない
+      const retention = parseDuration(d.cold?.hotRetention ?? '');
+      if (retention !== undefined && retention < MIN_SCHEDULED_HOT_RETENTION_MS) {
+        errors.push(
+          `datasets.${name}: -c coldIngest=scheduled requires cold.hotRetention of at least 2d (the previous UTC day is ingested at 01:00 UTC, so shorter values leave a gap)`,
+        );
       }
     }
   }

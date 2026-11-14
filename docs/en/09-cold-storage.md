@@ -28,7 +28,7 @@ datasets:
 | Key | Default | Meaning |
 |---|---|---|
 | `type` | `athena` | Where cold data is read from (only Athena for now) |
-| `hotRetention` | `7d` | Boundary = now − hotRetention (truncated to the minute). `90m` / `12h` / `7d` format |
+| `hotRetention` | `7d` | Boundary = now − hotRetention (truncated to the minute). `90m` / `12h` / `7d` format. At least `2d` with `-c coldIngest=scheduled` |
 | `maxRange` | `400d` | For datasets with `cold`, the range is checked against this value instead of `limits.maxRange` (the DynamoDB part never exceeds hotRetention) |
 
 ### (2) Deploy
@@ -95,7 +95,7 @@ The API Lambda gets only the workgroup, the Glue table, read access to `data/`, 
 | DynamoDB reads | Reads one day once (consumes RCU) | None (reading Streams from Lambda is free) |
 | Cost | Lambda and RCU | Lambda and Firehose (charged by volume for ingestion, format conversion, and dynamic partitioning) |
 
-In both modes, cold data is read only before hotRetention, so a delay of a few hours in ingestion does not change what is displayed.
+In both modes, cold data is read only before hotRetention, so a delay of a few hours in ingestion does not change what is displayed. With `scheduled`, the previous UTC day is ingested at 01:00 UTC, so `hotRetention` must be at least `2d`; shorter values leave a gap and are rejected at deploy time.
 
 ### (1) Backfilling (pnpm cold-backfill)
 
@@ -113,6 +113,7 @@ It replaces the contents of each date folder, so it can also compact the small f
 - For existing tables, enable Streams before deploying (`StreamViewType` `NEW_IMAGE` or `NEW_AND_OLD_IMAGES`). The stream ARN is looked up at deploy time
 - The event source mapping starts at `LATEST`. Items written right after the deployment, before the mapping becomes active (it took about 40 seconds in our test), are not ingested. Backfill that day with `pnpm cold-backfill` if needed
 - Only INSERTs are ingested. Overwriting an item with the same key and time is a MODIFY and is skipped (so counts are not doubled). Rebuild such days with `pnpm cold-backfill`
+- Delivery is at least once. If a batch fails partway and Lambda retries it, minutes already sent to Firehose are sent again and their counts and sums are doubled. Rebuild such days with `pnpm cold-backfill`
 - If several datasets read the same table, one stream feeds all of them (the key is extracted by matching the partition key value against `template`)
 
 ### (3) Sample data (pnpm seed --cold-days)

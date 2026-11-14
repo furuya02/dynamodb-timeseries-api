@@ -2,7 +2,7 @@
 // ダウンサンプリング（集計）と出力形式
 // ---------------------------------------------------------------
 import { compareRows } from './rows';
-import { bucketStart } from './time';
+import { bucketStart, offsetMs } from './time';
 import { round } from './transform';
 import type { Agg, Column, Format, Row } from './types';
 
@@ -76,10 +76,15 @@ export function addRows(buckets: Buckets, rows: Row[], columns: Column[], interv
   return buckets;
 }
 
-/** 集計済みの区切り（コールドストアの行）を途中集計に加える */
-export function addBuckets(buckets: Buckets, from: Bucket[], columns: Column[], interval: number, tz: string): Buckets {
+/**
+ * 集計済みの区切り（コールドストアの行）を途中集計に加える。
+ * cutOffset はコールドストアで区切ったときのオフセット（from の時点の値）。夏時間の後は区切りの開始が tz の壁時計から 1 時間ずれるため、
+ * その時点のオフセットとの差だけ戻してから区切り直す（そのまま区切り直すと、前の区切りに入ってしまう）
+ */
+export function addBuckets(buckets: Buckets, from: Bucket[], columns: Column[], interval: number, tz: string, cutOffset?: number): Buckets {
   for (const f of from) {
-    const b = bucketOf(buckets, f.time, f.key, columns, interval, tz);
+    const time = cutOffset === undefined ? f.time : f.time + cutOffset - offsetMs(tz, f.time);
+    const b = bucketOf(buckets, time, f.key, columns, interval, tz);
     for (const { column } of columns) if (f.values[column]) mergePartial(b.values[column], f.values[column]);
   }
   return buckets;

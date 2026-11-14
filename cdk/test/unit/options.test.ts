@@ -97,6 +97,13 @@ describe('checkOptionsAgainstConfig', () => {
     expect(errorOfCheck({ ds: base({ cold: {} }) }, { cold: 'true' })).toBe('no error');
   });
 
+  it('scheduled では hotRetention を 2d 以上にする必要がある（stream なら短くてもよい）', () => {
+    const short = base({ cold: { hotRetention: '12h' } });
+    expect(errorOfCheck({ ds: short }, { cold: 'true' })).toContain('requires cold.hotRetention of at least 2d');
+    expect(errorOfCheck({ ds: short }, { cold: 'true', coldIngest: 'stream' })).toBe('no error');
+    expect(errorOfCheck({ ds: base({ cold: { hotRetention: '2d' } }) }, { cold: 'true' })).toBe('no error');
+  });
+
   it('cold がなければ何も確かめない。-c cold=true なのに cold のデータセットがなければエラー', () => {
     expect(errorOfCheck({ ds: base() }, {})).toBe('no error');
     expect(errorOfCheck({ ds: base() }, { cold: 'true' })).toContain('no dataset in datasets.yaml has cold');

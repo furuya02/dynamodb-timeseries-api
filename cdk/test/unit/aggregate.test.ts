@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { aggregate, shape } from '../../lambda/api/aggregate';
+import { addBuckets, aggregate, shape } from '../../lambda/api/aggregate';
+import { bucketStart, offsetMs } from '../../lambda/api/time';
 import type { Column, Row } from '../../lambda/api/types';
 
 const T0 = Date.parse('2025-11-03T00:00:00Z');
@@ -65,5 +66,25 @@ describe('shape', () => {
 
   it('行がなければ空', () => {
     expect(shape([], 'wide')).toEqual([]);
+  });
+});
+
+describe('addBuckets', () => {
+  const D = 86_400_000;
+  const partial = { cnt: 1, sum: 5, min: 5, max: 5, last: 5, lastTs: 0 };
+
+  it('夏時間の後も、コールドストアの区切りを同じ日に入れる（from の時点のオフセットで切った区切り）', () => {
+    const tz = 'America/New_York';
+    const from = Date.parse('2026-10-25T04:00:00Z'); // 夏時間（-04:00）の 0 時
+    const t = Date.parse('2026-11-05T12:00:00Z'); // 夏時間の終了後（-05:00）
+    const off = offsetMs(tz, from);
+    const coldTime = Math.floor((t + off) / D) * D - off; // Athena の区切りと同じ計算（sql.ts）
+    const out = addBuckets(new Map(), [{ time: coldTime, key: 'a', values: { v: { ...partial, lastTs: t } } }], [cols[0]], D, tz, off);
+    expect([...out.values()].map((b) => b.time)).toEqual([bucketStart(t, D, tz)]);
+  });
+
+  it('夏時間がなければ、区切りの開始時刻のまま', () => {
+    const out = addBuckets(new Map(), [{ time: T0, key: 'a', values: { v: partial } }], [cols[0]], 5 * M, 'UTC', 0);
+    expect([...out.values()].map((b) => b.time)).toEqual([T0]);
   });
 });

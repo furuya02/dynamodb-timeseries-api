@@ -37,9 +37,9 @@ sequenceDiagram
 |---|---|---|
 | `dataset` | ○ | データセット名 |
 | `key` | ○ | キー。カンマ区切りで複数（重複と前後の空白は除く）。`keys.pattern` / `keys.values` に合うもの、`limits.maxKeys` 個まで |
-| `from` / `to` | ○ | UNIX 時刻（ミリ秒）。両端を含む。`to - from` は `limits.maxRange` 以内 |
+| `from` / `to` | ○ | UNIX 時刻（ミリ秒、13 桁まで）。両端を含む。`to - from` は `limits.maxRange` 以内 |
 | `fields` | | 返す列（カンマ区切り。列名・属性名のどちらでも）。省略すると全列 |
-| `interval` | | 集計の区切り。ミリ秒の整数、または `30s` / `5m` / `1h` / `1d` |
+| `interval` | | 集計の区切り。ミリ秒の整数、または `30s` / `5m` / `1h` / `1d`。`maxRange` 以内 |
 | `agg` | | `avg`（既定）/ `min` / `max` / `sum` / `count` / `last`。`interval` と一緒に指定する |
 | `latest` | | `1`（または `true`）でキーごとに最新の 1 件。`interval` とは同時に指定できない |
 | `format` | | `long`（既定）/ `wide` |
@@ -137,6 +137,7 @@ sequenceDiagram
 | `Specify from as UNIX time in milliseconds. ...` | `from` / `to` が数値でない |
 | `from must be earlier than or equal to to` | `from > to` |
 | `The time range is too long. Keep it within 31d (limits.maxRange)` | 期間が `maxRange` を超える |
+| `interval is too long. Keep it within 31d (limits.maxRange)` | `interval` が `maxRange` を超える |
 | `X in fields is not defined in the dataset. ...` | 定義にない列 |
 | `interval must be milliseconds (...) or 30s / 5m / 1h / 1d` | `interval` の形式 |
 | `agg must be one of ...` / `agg requires interval` | `agg` の誤り |

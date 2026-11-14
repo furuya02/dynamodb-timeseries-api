@@ -32,6 +32,9 @@ describe('parseQueryRequest: 入力の検証', () => {
     [{ dataset: 'epoch_ms', key: 'room-01', from: '0' }, '400 Specify to as UNIX time'],
     [{ dataset: 'epoch_ms', key: 'room-01', from: '2', to: '1' }, '400 from must be earlier'],
     [{ dataset: 'epoch_ms', key: 'room-01', from: '0', to: `${32 * 24 * H}` }, '400 The time range is too long. Keep it within 31d'],
+    [{ dataset: 'epoch_ms', key: 'room-01', from: '0', to: '1', interval: '32d' }, '400 interval is too long. Keep it within 31d'],
+    [{ dataset: 'epoch_ms', key: 'room-01', from: '0', to: '1', interval: '9999999999999' }, '400 interval is too long'],
+    [{ dataset: 'epoch_ms', key: 'room-01', from: '0', to: '9999999999999999' }, '400 Specify to as UNIX time'],
     [{ dataset: 'transform', key: 'x', from: '0', to: '1', fields: 'secret' }, '400 secret in fields'],
     [{ dataset: 'agg', key: 'a', from: '0', to: '1', agg: 'avg' }, '400 agg requires interval'],
     [{ dataset: 'agg', key: 'a', from: '0', to: '1', interval: '1m', agg: 'median' }, '400 agg must be one of avg / min'],
@@ -50,6 +53,14 @@ describe('parseQueryRequest: 入力の検証', () => {
 
   it('期間は maxRange ちょうどまで受け付ける', () => {
     expect(errorOf({ dataset: 'epoch_ms', key: 'room-01', from: '0', to: `${31 * 24 * H}` })).toBe('no error');
+  });
+
+  it('interval は maxRange ちょうどまで受け付ける', () => {
+    expect(errorOf({ dataset: 'epoch_ms', key: 'room-01', from: '0', to: '1', interval: '31d' })).toBe('no error');
+  });
+
+  it('from / to は 13 桁まで受け付ける', () => {
+    expect(errorOf({ dataset: 'iso_prefix', key: 'a', from: '9999999999999', to: '9999999999999' })).toBe('no error');
   });
 });
 
