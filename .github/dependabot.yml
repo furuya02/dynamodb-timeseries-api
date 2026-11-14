@@ -11,6 +11,10 @@ updates:
         patterns: ["aws-cdk", "aws-cdk-lib", "constructs"]
       dev-tools:
         dependency-type: development
+    ignore:
+      # Keep @types/node on the major version of the Node.js runtime (22 / 24)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
