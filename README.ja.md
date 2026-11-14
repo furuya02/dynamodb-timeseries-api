@@ -1,13 +1,20 @@
-<p align="center"><img src="docs/images/brand/ductus-icon.svg" width="112" alt="Ductus のロゴ"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/ductus-icon-dark.svg">
+    <img src="docs/images/brand/ductus-icon.svg" width="112" alt="Ductus のロゴ">
+  </picture>
+</p>
 
 <h1 align="center">Ductus</h1>
 
 <p align="center"><code>dynamodb-timeseries-api</code> — Grafana のための DynamoDB 時系列 API</p>
 
-[English](README.md) | 日本語
+<p align="center"><a href="README.md">English</a> | 日本語</p>
 
-[![CI](https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml/badge.svg)](https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml"><img src="https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+</p>
 
 Amazon DynamoDB の時系列データを、Grafana（Infinity データソース）から読むための API です。
 設定ファイル 1 つ（`config/datasets.yaml`）に「どのテーブルの、どのキーの、どの属性を返すか」を書き、AWS CDK でデプロイします。
