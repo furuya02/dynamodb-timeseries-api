@@ -7,7 +7,8 @@ import { buckets, parseIso, toLocalIso } from './time';
 /** ISO 8601 の範囲の上限に付ける文字。保存値の末尾（.000Z や +09:00）の違いを吸収する */
 const MAX_CHAR = '￿';
 
-const DATE_TOKEN = { daily: '{yyyy-MM-dd}', monthly: '{yyyy-MM}' } as const;
+/** 日付で分けたキーのテンプレートに書く日付の書式（設定ファイルの検証でも使う） */
+export const DATE_TOKEN = { daily: '{yyyy-MM-dd}', monthly: '{yyyy-MM}' } as const;
 
 /** 問い合わせるパーティションキーの値（日付で分けたキーなら、期間内の日付ごと） */
 export function partitionValues(d: ResolvedDataset, key: string, from: number, to: number): string[] {

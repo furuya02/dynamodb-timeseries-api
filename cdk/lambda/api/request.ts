@@ -25,9 +25,8 @@ const UNRESOLVED = /\$\{|\$__/;
 /** クエリパラメータを検証し、問い合わせに使う形にする。誤りは理由つきの ApiError（400 / 404） */
 export function parseQueryRequest(datasets: Datasets, p: QueryParams): QueryRequest {
   rejectUnresolvedVariables(p);
-  const name = requireValue(p.dataset, 'Specify dataset');
-  const dataset = datasets[name];
-  if (!dataset) throw new ApiError(404, `Dataset ${name} is not defined`);
+  const dataset = findDataset(datasets, p.dataset);
+  const name = p.dataset as string;
 
   const keys = parseKeys(dataset, p.key);
   const from = parseTime(p.from, 'from');
@@ -70,9 +69,12 @@ function rejectUnresolvedVariables(p: QueryParams): void {
   }
 }
 
-function requireValue(v: string | undefined, message: string): string {
-  if (!v) throw new ApiError(400, message);
-  return v;
+/** データセット名を検証して返す（400: 指定なし / 404: 定義なし） */
+export function findDataset(datasets: Datasets, name: string | undefined): ResolvedDataset {
+  if (!name) throw new ApiError(400, 'Specify dataset');
+  const d = datasets[name];
+  if (!d) throw new ApiError(404, `Dataset ${name} is not defined`);
+  return d;
 }
 
 /** Grafana の複数選択変数は ${key:csv} で "a,b,c" として渡す。重複と空白は除く */

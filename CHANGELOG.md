@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Aggregation is computed from mergeable partial aggregates (results are unchanged)
 - The sample dashboard and alert rule are in English
 - All user-facing messages are in English: API errors, configuration and deploy option validation, CLI output (`pnpm seed`, `check`, `init-dataset`, `grafana-config`, `local-api`, `cold-backfill`), CloudFormation output descriptions, and the sample `datasets.yaml`
+- The `tz` query parameter accepts offsets only within ±14:00, the same rule as `datasets.yaml` (`+99:99` was accepted before)
+- Internal: dataset lookup, time zone validation, column naming, and date tokens are defined once and shared by the API and the configuration validation; the three Lambda functions share one construct helper (the synthesized templates are unchanged)
 
 ### Fixed
 

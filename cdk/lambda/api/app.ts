@@ -3,11 +3,11 @@
 // Lambda（index.ts）とローカル実行（scripts/local-api.ts）、テストから同じ形で使う
 // ---------------------------------------------------------------
 import { ResponseCache } from './cache';
-import { findDataset, type KeyList, listDatasets, listKeys } from './catalog';
+import { type KeyList, listDatasets, listKeys } from './catalog';
 import type { ColdReader, ColdResult } from './cold/reader';
 import { ApiError } from './errors';
 import { type QueryClient, readRows } from './reader';
-import { parseQueryRequest, type QueryParams } from './request';
+import { findDataset, parseQueryRequest, type QueryParams } from './request';
 import { measureResponse, type QueryResponse, toResponse } from './response';
 import { splitRange } from './split';
 import type { ApiResult, Datasets, Logger, QueryRequest, ReadResult } from './types';

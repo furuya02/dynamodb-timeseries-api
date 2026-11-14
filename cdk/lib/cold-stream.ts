@@ -3,8 +3,7 @@ import type * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as firehose from 'aws-cdk-lib/aws-kinesisfirehose';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
-import * as logs from 'aws-cdk-lib/aws-logs';
+import type { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as cdk from 'aws-cdk-lib/core';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import type { Construct } from 'constructs';
@@ -13,6 +12,7 @@ import { coldDatasets } from './cold-ingest';
 import type { ColdStore } from './cold-store';
 import type { ResolvedDataset } from './config';
 import { PROJECT, SAMPLE_TABLE } from './constants';
+import { createNodeFunction } from './node-function';
 
 const INGEST_DIR = path.join(__dirname, '../lambda/ingest');
 export const STREAM_INGEST_FUNCTION = `${PROJECT}-cold-stream`;
@@ -107,22 +107,18 @@ export function createStreamIngest(
 ): NodejsFunction {
   const stack = cdk.Stack.of(scope);
   const delivery = createFirehose(scope, props.store);
-  const logGroup = new logs.LogGroup(scope, 'ColdStreamLogs', {
-    logGroupName: `/aws/lambda/${STREAM_INGEST_FUNCTION}`,
-    retention: props.logRetentionDays as logs.RetentionDays,
-    removalPolicy: cdk.RemovalPolicy.DESTROY,
-  });
-  const fn = new NodejsFunction(scope, 'ColdStreamFunction', {
-    functionName: STREAM_INGEST_FUNCTION,
-    entry: path.join(INGEST_DIR, 'stream.ts'),
-    runtime: lambda.Runtime.NODEJS_24_X,
-    architecture: lambda.Architecture.ARM_64,
-    memorySize: 512,
-    timeout: cdk.Duration.minutes(1),
-    logGroup,
-    environment: { TSAPI_COLD_FIREHOSE: COLD_FIREHOSE },
-    bundling: { format: OutputFormat.ESM, target: 'node24' },
-  });
+  const fn = createNodeFunction(
+    scope,
+    { function: 'ColdStreamFunction', logGroup: 'ColdStreamLogs' },
+    {
+      functionName: STREAM_INGEST_FUNCTION,
+      entry: path.join(INGEST_DIR, 'stream.ts'),
+      memorySize: 512,
+      timeout: cdk.Duration.minutes(1),
+      logRetentionDays: props.logRetentionDays,
+      environment: { TSAPI_COLD_FIREHOSE: COLD_FIREHOSE },
+    },
+  );
   fn.addToRolePolicy(new iam.PolicyStatement({ actions: ['firehose:PutRecordBatch'], resources: [delivery.attrArn] }));
 
   // ListStreams はリソースを指定できない

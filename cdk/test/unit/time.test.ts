@@ -26,6 +26,10 @@ describe('offsetMs / isTimezone', () => {
   it('不正なタイムゾーンは false', () => {
     expect(isTimezone('Asia/Tokyo')).toBe(true);
     expect(isTimezone('Mars/Base')).toBe(false);
+    // オフセットは ±14:00 まで（設定ファイルの検証と同じ規則）
+    expect(isTimezone('+14:00')).toBe(true);
+    expect(isTimezone('+99:99')).toBe(false);
+    expect(isTimezone('-15:00')).toBe(false);
   });
 });
 
