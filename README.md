@@ -1,13 +1,20 @@
-<p align="center"><img src="docs/images/brand/ductus-icon.svg" width="112" alt="Ductus logo"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/ductus-icon-dark.svg">
+    <img src="docs/images/brand/ductus-icon.svg" width="112" alt="Ductus logo">
+  </picture>
+</p>
 
 <h1 align="center">Ductus</h1>
 
 <p align="center"><code>dynamodb-timeseries-api</code> — a DynamoDB time-series API for Grafana</p>
 
-English | [日本語](README.ja.md)
+<p align="center">English | <a href="README.ja.md">日本語</a></p>
 
-[![CI](https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml/badge.svg)](https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml"><img src="https://github.com/furuya02/dynamodb-timeseries-api/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+</p>
 
 An API for reading time-series data in Amazon DynamoDB from Grafana (with the Infinity data source).
 You describe "which table, which keys, and which attributes to return" in a single configuration file (`config/datasets.yaml`) and deploy it with the AWS CDK.
