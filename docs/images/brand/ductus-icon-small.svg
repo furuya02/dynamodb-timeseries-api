@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Ductus">
+  <title>Ductus</title>
+  <rect width="32" height="32" rx="7" fill="#1F2A44"/>
+  <path d="M5 20L13 16L19 18L27 12V27H23V24A2.5 2.5 0 0 0 18 24V27H14V24A2.5 2.5 0 0 0 9 24V27H5Z" fill="#EFE6D4"/>
+  <polyline points="5,14.5 13,10.5 19,12.5 26.5,6.5" fill="none" stroke="#4CC6D3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="26.5" cy="6.5" r="2.3" fill="#4CC6D3"/>
+</svg>

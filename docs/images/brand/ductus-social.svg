@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Ductus — DynamoDB time-series API for Grafana">
+  <title>Ductus — DynamoDB time-series API for Grafana</title>
+  <rect width="1200" height="630" fill="#FFFFFF"/>
+  <g stroke="#E6E9EF" stroke-width="1">
+    <path d="M0 165H1200M0 315H1200M0 465H1200"/>
+  </g>
+  <g transform="translate(0 15) scale(0.9375)">
+    <g transform="translate(120 160) scale(5)">
+      <rect width="64" height="64" rx="14" fill="#1F2A44" stroke="#1F2A44" stroke-width="0.4"/>
+      <path d="M10 36L21 28L32 32L43 20L54 24V52H49V44A4 4 0 0 0 41 44V52H36V44A4 4 0 0 0 28 44V52H23V44A4 4 0 0 0 15 44V52H10Z" fill="#EFE6D4"/>
+      <polyline points="10,29 21,21 32,25 43,13 54,17" fill="none" stroke="#4CC6D3" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="54" cy="17" r="3.4" fill="#4CC6D3"/>
+    </g>
+    <text x="520" y="300" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="132" fill="#1F2A44" letter-spacing="-2">Ductus</text>
+    <text x="524" y="370" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-weight="500" font-size="40" fill="#5D6577">DynamoDB time-series API for Grafana</text>
+    <text x="524" y="440" font-family="Menlo, monospace" font-size="26" fill="#178C9C">github.com/furuya02/dynamodb-timeseries-api</text>
+  </g>
+</svg>

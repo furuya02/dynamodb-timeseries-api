@@ -1,4 +1,8 @@
-# dynamodb-timeseries-api
+<p align="center"><img src="docs/images/brand/ductus-icon.svg" width="112" alt="Ductus のロゴ"></p>
+
+<h1 align="center">Ductus</h1>
+
+<p align="center"><code>dynamodb-timeseries-api</code> — Grafana のための DynamoDB 時系列 API</p>
 
 [English](README.md) | 日本語
 
