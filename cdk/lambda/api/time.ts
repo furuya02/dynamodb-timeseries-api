@@ -38,7 +38,13 @@ export function offsetMs(tz: string, utcMs: number): number {
   return wall - Math.floor(utcMs / 1000) * 1000;
 }
 
+/** 受け付けるオフセット（-14:00〜+14:00） */
+const VALID_OFFSET = /^[+-](0\d|1[0-4]):[0-5]\d$/;
+
+/** "UTC" / "+09:00"（±14:00 まで）/ IANA 名（Asia/Tokyo）か。設定ファイルの検証と API の tz で共通 */
 export function isTimezone(tz: string): boolean {
+  if (tz === 'UTC' || VALID_OFFSET.test(tz)) return true;
+  if (OFFSET.test(tz)) return false;
   try {
     offsetMs(tz, 0);
     return true;

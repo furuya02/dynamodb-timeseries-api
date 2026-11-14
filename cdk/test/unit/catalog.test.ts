@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { findDataset, listDatasets, listKeys } from '../../lambda/api/catalog';
+import { listDatasets, listKeys } from '../../lambda/api/catalog';
 import { ApiError } from '../../lambda/api/errors';
+import { findDataset } from '../../lambda/api/request';
 import { base, fakeClient } from './helpers';
 
 describe('listDatasets', () => {

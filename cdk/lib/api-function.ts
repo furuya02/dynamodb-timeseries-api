@@ -1,13 +1,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
-import * as logs from 'aws-cdk-lib/aws-logs';
+import type { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as cdk from 'aws-cdk-lib/core';
 import type { Construct } from 'constructs';
 import type { ResolvedDataset } from './config';
 import { PROJECT } from './constants';
+import { createNodeFunction } from './node-function';
 
 const LAMBDA_DIR = path.join(__dirname, '../lambda/api');
 
@@ -32,23 +31,18 @@ export function queryResourceArns(stack: cdk.Stack, datasets: Record<string, Res
 /** API の Lambda 関数とロググループ。設定に書かれたテーブル・インデックスへの dynamodb:Query だけを付ける */
 export function createApiFunction(scope: Construct, props: { datasets: Record<string, ResolvedDataset>; logRetentionDays: number }): NodejsFunction {
   const stack = cdk.Stack.of(scope);
-  const logGroup = new logs.LogGroup(scope, 'ApiFunctionLogs', {
-    logGroupName: `/aws/lambda/${PROJECT}`,
-    retention: props.logRetentionDays as logs.RetentionDays,
-    removalPolicy: cdk.RemovalPolicy.DESTROY,
-  });
-
   writeGeneratedConfig(props.datasets);
-  const fn = new NodejsFunction(scope, 'ApiFunction', {
-    functionName: PROJECT,
-    entry: path.join(LAMBDA_DIR, 'index.ts'),
-    runtime: lambda.Runtime.NODEJS_24_X,
-    architecture: lambda.Architecture.ARM_64,
-    memorySize: 512,
-    timeout: cdk.Duration.seconds(29),
-    logGroup,
-    bundling: { format: OutputFormat.ESM, target: 'node24' },
-  });
+  const fn = createNodeFunction(
+    scope,
+    { function: 'ApiFunction', logGroup: 'ApiFunctionLogs' },
+    {
+      functionName: PROJECT,
+      entry: path.join(LAMBDA_DIR, 'index.ts'),
+      memorySize: 512,
+      timeout: cdk.Duration.seconds(29),
+      logRetentionDays: props.logRetentionDays,
+    },
+  );
   fn.addToRolePolicy(new iam.PolicyStatement({ actions: ['dynamodb:Query'], resources: queryResourceArns(stack, props.datasets) }));
   return fn;
 }

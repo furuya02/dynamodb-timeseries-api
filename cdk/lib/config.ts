@@ -1,6 +1,9 @@
 import * as fs from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'zod';
+import { DATE_TOKEN } from '../lambda/api/key-condition';
+import { isTimezone } from '../lambda/api/time';
+import { columnName } from '../lambda/api/transform';
 
 // ---------------------------------------------------------------
 // config/datasets.yaml のスキーマ
@@ -15,25 +18,8 @@ export const timeFormats = ['epoch_s', 'epoch_ms', 'iso8601'] as const;
 export const bucketUnits = ['none', 'daily', 'monthly'] as const;
 export const fieldTypes = ['number', 'string', 'boolean', 'json'] as const;
 
-const bucketToken: Record<(typeof bucketUnits)[number], string | undefined> = {
-  none: undefined,
-  daily: '{yyyy-MM-dd}',
-  monthly: '{yyyy-MM}',
-};
-
 // "UTC" / "+09:00" / IANA 名（Asia/Tokyo）
-const timezone = z.string().refine(
-  (tz) => {
-    if (tz === 'UTC' || /^[+-](0\d|1[0-4]):[0-5]\d$/.test(tz)) return true;
-    try {
-      new Intl.DateTimeFormat('en-US', { timeZone: tz });
-      return true;
-    } catch {
-      return false;
-    }
-  },
-  { message: 'Use UTC, an offset such as +09:00, or an IANA name such as Asia/Tokyo' },
-);
+const timezone = z.string().refine(isTimezone, { message: 'Use UTC, an offset such as +09:00, or an IANA name such as Asia/Tokyo' });
 
 const limitsSchema = z
   .object({
@@ -117,7 +103,7 @@ const datasetSchema = z
     if (!pk.template.includes('{key}')) {
       ctx.addIssue({ code: 'custom', path: ['partitionKey', 'template'], message: 'Include {key}' });
     }
-    const token = bucketToken[pk.bucket];
+    const token = pk.bucket === 'none' ? undefined : DATE_TOKEN[pk.bucket];
     if (token && !pk.template.includes(token)) {
       ctx.addIssue({ code: 'custom', path: ['partitionKey', 'template'], message: `Include ${token} when bucket is ${pk.bucket}` });
     }
@@ -150,7 +136,7 @@ const datasetSchema = z
     }
     const names = new Set<string>();
     d.fields.forEach((f, i) => {
-      const label = f.alias ?? f.name.replaceAll('.', '_'); // 応答の列名（lambda/api/transform.ts の columnName と同じ）
+      const label = columnName(f);
       if (names.has(label)) ctx.addIssue({ code: 'custom', path: ['fields', i], message: `Duplicate column name ${label}` });
       // 応答の行は { time, key, ...値 } の形なので、同じ名前の列があると time / key を上書きしてしまう
       if (label === 'time' || label === 'key')

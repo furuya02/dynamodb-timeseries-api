@@ -4,7 +4,6 @@
 // ---------------------------------------------------------------
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import type { ResolvedDataset } from '../../lib/config';
-import { ApiError } from './errors';
 import type { QueryClient } from './reader';
 import { isAllowedKey } from './request';
 import { columnName, getPath } from './transform';
@@ -26,14 +25,6 @@ export interface KeyList {
   /** values: keys.values から / list: 登録用アイテムから / none: 一覧を作れない設定 */
   source: 'values' | 'list' | 'none';
   consumedRcu: number;
-}
-
-/** データセット名を検証して返す */
-export function findDataset(datasets: Datasets, name: string | undefined): ResolvedDataset {
-  if (!name) throw new ApiError(400, 'Specify dataset');
-  const d = datasets[name];
-  if (!d) throw new ApiError(404, `Dataset ${name} is not defined`);
-  return d;
 }
 
 /** GET /keys?dataset=x。keys.values があればその値、keys.list があれば登録用アイテムから読む */
