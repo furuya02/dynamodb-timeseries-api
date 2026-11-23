@@ -12,12 +12,12 @@
   "devDependencies": {
     "@types/aws-lambda": "8.10.164",
     "@types/node": "^24.10.1",
-    "@vitest/coverage-v8": "5.1.0",
-    "aws-cdk": "2.1148.0",
-    "hyparquet": "1.33.0",
+    "@vitest/coverage-v8": "5.1.1",
+    "aws-cdk": "2.1149.0",
+    "hyparquet": "1.33.1",
     "tsx": "^4.23.0",
     "typescript": "~7.0.2",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   },
   "dependencies": {
     "@aws-sdk/client-athena": "3.1166.0",
